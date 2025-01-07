@@ -2,8 +2,8 @@
 
 import React from 'react'
 import { useTheme } from 'next-themes'
-import { SunIcon, MoonIcon } from '@heroicons/react/24/outline'
 import { motion } from 'framer-motion'
+import { SunIcon, MoonIcon } from 'lucide-react'
 
 enum Theme {
   Dark = 'dark',

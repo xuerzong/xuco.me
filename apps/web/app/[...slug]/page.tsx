@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getPageContent, getPageFrontmatter } from '@/contents/queries'
+import { getAllContents, getPageContent, getPageFrontmatter } from '@/contents/queries'
 import Hero from '@/components/Hero'
 import Container from '@/components/Container'
 
@@ -20,6 +20,11 @@ export const generateMetadata = async ({ params }: Props) => {
     openGraph: { ...frontmatter },
     twitter: { ...frontmatter },
   } as Metadata
+}
+
+export const generateStaticParams = async () => {
+  const pages = await getAllContents('pages')
+  return pages.map((slug) => ({ slug }))
 }
 
 const Page = async ({ params }: Props) => {

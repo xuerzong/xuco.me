@@ -43,7 +43,7 @@ const Hero: React.FC = () => {
           {...animation}
           transition={{ delay: 0.2 }}
         >
-          I just hope that the people I love and those who love me are in{' '}
+          I hope that the people I love and those who love me are in{' '}
           <span className="text-primary underline">good health</span>,
         </motion.p>
 

@@ -10,10 +10,6 @@ const menus = [
     path: '/',
   },
   {
-    name: 'Guestbook',
-    path: '/guestbook',
-  },
-  {
     name: 'About',
     path: '/about',
   },
