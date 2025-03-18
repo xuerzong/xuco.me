@@ -33,21 +33,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Write env file
-        env:
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          GITHUB_CLIENT_ID: ${{ secrets.MY_GITHUB_CLIENT_ID }}
-          GITHUB_CLIENT_SECRET: ${{ secrets.MY_GITHUB_CLIENT_SECRET }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
-        run: |
-          touch apps/web/.env
-          echo POSTGRES_URL=$POSTGRES_URL >> apps/web/.env
-          echo GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID >> apps/web/.env
-          echo GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET >> apps/web/.env
-          echo AUTH_SECRET=$AUTH_SECRET >> apps/web/.env
-          echo NEXTAUTH_URL=$NEXTAUTH_URL >> apps/web/.env
-
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:

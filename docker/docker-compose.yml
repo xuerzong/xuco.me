@@ -3,11 +3,7 @@ name: dianwo
 services:
   web:
     container_name: xuco-web
-    build:
-      context: ../
-      dockerfile: Dockerfile
-      args:
-        - WEB_NODE_ENV=${WEB_NODE_ENV}
+    image: ghcr.io/xuerzong/xuco.me:latest
     ports:
       - 80:80
     restart: unless-stopped
