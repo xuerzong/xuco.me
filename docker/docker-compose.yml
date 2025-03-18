@@ -1,0 +1,73 @@
+name: dianwo
+
+services:
+  web:
+    container_name: xuco-web
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      args:
+        - WEB_NODE_ENV=${WEB_NODE_ENV}
+    ports:
+      - 80:80
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - xuco
+
+  umami:
+    image: docker.umami.is/umami-software/umami:postgresql-latest
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - xuco
+    environment:
+      DATABASE_URL: postgres://${UMAMI_PG_USER}:${UMAMI_PG_PASSWORD}@postgres:5432/umami
+      
+  postgres-umami:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${UMAMI_PG_USER}
+      POSTGRES_PASSWORD: ${UMAMI_PG_PASSWORD}
+      POSTGRES_DB: umami
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - xuco 
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  caddy:
+    image: caddy:latest
+    ports:
+      - 80:80
+      - 443:443
+    restart: unless-stopped
+    volumes:
+      - ./volumes/Caddyfile:/etc/caddy/Caddyfile
+      - ./volumes/caddy-data:/data
+      - ./volumes/caddy-config:/config
+    networks:
+      - xuco
+
+networks:
+  xuco:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
