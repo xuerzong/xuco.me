@@ -51,19 +51,6 @@ services:
       timeout: 5s
       retries: 5
 
-  caddy:
-    image: caddy:latest
-    ports:
-      - 80:80
-      - 443:443
-    restart: unless-stopped
-    volumes:
-      - ./volumes/Caddyfile:/etc/caddy/Caddyfile
-      - ./volumes/caddy-data:/data
-      - ./volumes/caddy-config:/config
-    networks:
-      - xuco
-
 networks:
   xuco:
     driver: bridge
