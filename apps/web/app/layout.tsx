@@ -46,7 +46,7 @@ const Layout = ({ children }: React.PropsWithChildren) => {
       >
         <Script
           src="https://umami.xuco.me/script.js"
-          data-website-id="2d3d68bf-7184-44b2-93da-a26a274418d9"
+          data-website-id="59860341-b1d7-416c-869d-81daceda703e"
         />
         <ThemeProvider>
           <Header />
