@@ -3,15 +3,10 @@ name: dianwo
 services:
   web:
     container_name: xuco-web
-    image: ghcr.io/xuerzong/xuco.me:latest
+    image: ghcr.io/xuerzong/xuco.me:release
     ports:
       - 80:80
     restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
     networks:
       - xuco
 
