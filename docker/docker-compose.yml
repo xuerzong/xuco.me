@@ -23,7 +23,7 @@ services:
     environment:
       DATABASE_URL: postgres://${UMAMI_PG_USER}:${UMAMI_PG_PASSWORD}@postgres:5432/umami
       
-  postgres-umami:
+  postgres:
     image: postgres:latest
     ports:
       - "5432:5432"
