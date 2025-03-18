@@ -5,7 +5,7 @@ services:
     container_name: xuco-web
     image: ghcr.io/xuerzong/xuco.me:release
     ports:
-      - 80:80
+      - 8000:80
     restart: unless-stopped
     networks:
       - xuco
