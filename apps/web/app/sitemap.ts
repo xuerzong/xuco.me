@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import CONFIG from '@/constants/config'
+import CONFIG from 'constants/config'
 
 const sitemap = async () => {
   const routes = ['/', '/uses', '/guestbook']

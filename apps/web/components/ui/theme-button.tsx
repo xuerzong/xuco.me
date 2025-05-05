@@ -10,7 +10,7 @@ enum Theme {
   Light = 'light',
 }
 
-const ThemeButton: React.FC = () => {
+export const ThemeButton: React.FC = () => {
   const { theme, resolvedTheme, setTheme } = useTheme()
 
   const isDarkTheme = theme === Theme.Dark || resolvedTheme === Theme.Dark
@@ -27,5 +27,3 @@ const ThemeButton: React.FC = () => {
     </motion.button>
   )
 }
-
-export default ThemeButton

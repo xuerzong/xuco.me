@@ -1,9 +1,9 @@
-const SITE_URL = 'https://xuerzong.com'
-const SITE_TITLE = 'XUERZONG'
+const SITE_URL = 'https://xuco.me'
+const SITE_TITLE = 'XUCO'
 const SITE_DESCRIPTION =
   'This is a personal blog of Xuerzong. I write about web development, programming, and life.'
-const WEB_AUTHOR = 'xuerzong'
-const WEB_NAME = 'xuerzong'
+const WEB_AUTHOR = 'XUCO'
+const WEB_NAME = 'XUCO'
 
 // https://ilo.so/twitter-id/
 const TWITTER_ID = '1204933532528721922'

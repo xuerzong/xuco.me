@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getAllContents, getFrontmatter, getContent } from 'contents/queries'
-import Hero from 'components/Hero'
+import { getAllContents, getContent, getFrontmatter } from 'contents/queries'
 import Container from 'components/ui/container'
 
 interface Params {
@@ -14,7 +13,7 @@ interface Props {
 
 export const generateMetadata = async ({ params }: Props) => {
   const { slug = [] } = await params
-  const frontmatter = await getFrontmatter('pages', slug.join('/'))
+  const frontmatter = await getFrontmatter('posts', slug.join('/'))
   return {
     ...frontmatter,
     openGraph: { ...frontmatter },
@@ -23,13 +22,13 @@ export const generateMetadata = async ({ params }: Props) => {
 }
 
 export const generateStaticParams = async () => {
-  const pages = await getAllContents('pages')
+  const pages = await getAllContents('posts')
   return pages.map((slug) => ({ slug }))
 }
 
 const Page = async ({ params }: Props) => {
   const { slug = [] } = await params
-  const { success, content } = await getContent('pages', slug.join('/'))
+  const { success, content } = await getContent('posts', slug.join('/'))
 
   if (!success) {
     return notFound()
@@ -37,8 +36,14 @@ const Page = async ({ params }: Props) => {
 
   return (
     <>
-      <Hero title={content.frontmatter.title} description={content.frontmatter.description} />
-      <Container className="mdx max-w-screen-md pb-20">{content.content}</Container>
+      <div className="sticky top-12 z-10 py-2 bg-background border-b border-border">
+        <Container className="max-w-screen-md">
+          <h1 className="text-3xl font-bold">{content.frontmatter.title}</h1>
+        </Container>
+      </div>
+      <Container className="mdx max-w-screen-md space-x-4 pt-6 pb-20">
+        <div>{content.content}</div>
+      </Container>
     </>
   )
 }

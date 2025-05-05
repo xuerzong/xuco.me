@@ -3,7 +3,7 @@
 import { motion, type Variants } from 'framer-motion'
 import GridBackground from './GridBackground'
 import Container from './Container'
-import { cn } from '@/libs/utils/cn'
+import { cn } from 'libs/utils/cn'
 
 interface Props {
   title?: React.ReactNode
@@ -20,13 +20,10 @@ const Hero: React.FC<Props> = ({ title, description, className }) => {
   return (
     <GridBackground>
       <Container
-        className={cn(
-          'max-w-screen-md relative z-10 flex flex-col justify-center pt-24 min-h-[320px]',
-          className
-        )}
+        className={cn('max-w-screen-md relative z-10 flex flex-col justify-center pt-6', className)}
       >
         <motion.h2
-          className="text-4xl mb-8 md:text-5xl font-medium"
+          className="text-2xl mb-8 md:text-4xl font-bold"
           {...animation}
           transition={{ delay: 0.1 }}
         >

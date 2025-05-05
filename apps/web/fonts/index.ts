@@ -1,5 +1,5 @@
 import localFont from 'next/font/local'
-import { Recursive } from 'next/font/google'
+import { Work_Sans } from 'next/font/google'
 
 const JetBrainsMono = localFont({
   src: [
@@ -16,11 +16,11 @@ const JetBrainsMono = localFont({
   variable: '--font-mono',
 })
 
-const RecursiveFont = Recursive({
+const WorkSansFont = Work_Sans({
   subsets: ['latin'],
   weight: ['400', '700'],
 })
 
-const fonts = { JetBrainsMono, RecursiveFont }
+const fonts = { JetBrainsMono, WorkSansFont }
 
 export default fonts

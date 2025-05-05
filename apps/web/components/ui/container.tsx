@@ -5,7 +5,7 @@ interface Props {
   className?: string
 }
 
-const Container = forwardRef<HTMLDivElement, PropsWithChildren<Props>>(
+export const Container = forwardRef<HTMLDivElement, PropsWithChildren<Props>>(
   ({ className, ...restProps }, ref) => {
     return (
       <div ref={ref} className={cn('max-w-screen-lg mx-auto px-4', className)} {...restProps} />

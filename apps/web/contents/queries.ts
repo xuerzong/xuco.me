@@ -1,12 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import mdxComponents from '@/components/mdx'
+import mdxComponents from 'components/mdx'
 import { mdx, frontmatter } from '@xuerzong/mdx'
-import { flattenArray } from '@/libs/utils/array'
+import { flattenArray } from 'libs/utils/array'
+
+type ContentType = 'pages' | 'posts'
 
 const contentDir = path.resolve(process.cwd(), 'contents')
 
-const readFileContent = (type: 'pages' | 'posts', slug: string) => {
+const readFileContent = (type: ContentType, slug: string) => {
   return new Promise<string>((resolve, reject) => {
     const filePath = path.resolve(contentDir, type, `${slug}.mdx`)
     if (!fs.existsSync(filePath)) {
@@ -17,7 +19,7 @@ const readFileContent = (type: 'pages' | 'posts', slug: string) => {
   })
 }
 
-export const getAllContents = async (type: 'pages' | 'posts') => {
+export const getAllContents = async (type: ContentType) => {
   const rootDir = path.resolve(contentDir, type)
 
   const getFileName = (filePath: string): string[] => {
@@ -50,9 +52,12 @@ type ContentResult =
       content: Content
     }
 
-export const getPageContent = async (slug: string): Promise<ContentResult> => {
+export const getContent = async (
+  type: ContentType = 'pages',
+  slug: string
+): Promise<ContentResult> => {
   try {
-    const content = await readFileContent('pages', slug)
+    const content = await readFileContent(type, slug)
     const markdownContent = await mdx(content, mdxComponents)
     return { success: true, content: markdownContent }
   } catch (error) {
@@ -60,9 +65,9 @@ export const getPageContent = async (slug: string): Promise<ContentResult> => {
   }
 }
 
-export const getPageFrontmatter = async (slug: string) => {
+export const getFrontmatter = async (type: ContentType = 'pages', slug: string) => {
   try {
-    const content = await readFileContent('pages', slug)
+    const content = await readFileContent(type, slug)
     return frontmatter(content)
   } catch (error) {
     return {} as Frontmatter
