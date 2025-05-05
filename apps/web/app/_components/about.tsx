@@ -18,7 +18,7 @@ const stacks = [
 
 const hobbies = [
   {
-    name: '摄影',
+    name: 'Photography',
     icon: (
       <NextImage
         src="/images/emoji/camera.png"
@@ -30,7 +30,7 @@ const hobbies = [
     ),
   },
   {
-    name: '骑行',
+    name: 'Biking',
     icon: (
       <NextImage
         src="/images/emoji/man-biking.png"
@@ -42,7 +42,7 @@ const hobbies = [
     ),
   },
   {
-    name: '徒步',
+    name: 'Walking',
     icon: (
       <NextImage
         src="/images/emoji/walking.png"
@@ -54,7 +54,7 @@ const hobbies = [
     ),
   },
   {
-    name: '烹饪',
+    name: 'Cooking',
     icon: (
       <NextImage
         src="/images/emoji/fried_egg.png"
@@ -70,7 +70,7 @@ const hobbies = [
 const secs = [
   {
     key: 'location',
-    name: '北京',
+    name: 'Beijing',
     icon: <MapPinIcon className="w-6 h-6 inline-block" />,
     className: 'col-span-3 md:col-span-2 pb-0',
     children: (
@@ -81,7 +81,7 @@ const secs = [
   },
   {
     key: 'hobby',
-    name: '爱好',
+    name: 'Hobbies',
     icon: <HeartIcon className="w-6 h-6 inline-block" />,
     className: 'col-span-3 md:col-span-1',
     children: (
@@ -100,7 +100,7 @@ const secs = [
   },
   {
     key: 'stack',
-    name: '技术栈',
+    name: 'Stack',
     icon: <CodeIcon className="w-6 h-6 inline-block" />,
     className: 'col-span-3 md:col-span-3',
     children: (
@@ -123,7 +123,7 @@ export const About = () => {
     <Container className="max-w-screen-md py-6">
       <h2 className="flex items-center justify-center text-xl font-bold space-x-2 mb-8">
         <span className="text-primary">-</span>
-        <span>关于我</span>
+        <span>About Me</span>
         <span className="text-primary">-</span>
       </h2>
 

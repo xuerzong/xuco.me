@@ -38,9 +38,13 @@ export const metadata: Metadata = {
   },
 }
 
-const Layout = ({ children }: React.PropsWithChildren) => {
+interface LayoutProps {
+  params: Promise<{}>
+}
+
+const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = async ({ children }) => {
   return (
-    <html lang="zh" className={fonts.WorkSansFont.className} suppressHydrationWarning>
+    <html lang="en-US" className={fonts.WorkSansFont.className} suppressHydrationWarning>
       <body className={`${fonts.JetBrainsMono.variable} bg-background text-foreground`}>
         <Script
           src="https://umami.xuco.me/script.js"
