@@ -36,7 +36,7 @@ const Table: React.FC<React.PropsWithChildren> = ({ children }) => {
           border-color: rgb(229, 231, 235)
         }
     `}</style>
-      <div className="mdx-table border dark:border-gray-800 rounded-md">
+      <div className="mdx-table border border-border rounded-md">
         <table>{children}</table>
       </div>
     </>

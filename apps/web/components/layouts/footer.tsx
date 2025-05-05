@@ -1,23 +1,19 @@
-import Container from '@/components/Container'
+import Container from 'components/ui/container'
 import NextLink from 'next/link'
-import CONFIG from '@/constants/config'
+import CONFIG from 'constants/config'
 
 const footerLinks = [
   [
     {
-      name: 'Home',
+      name: '首页',
       path: '/',
     },
     {
-      name: 'Guestbook',
-      path: '/guestbook',
-    },
-    {
-      name: 'About',
+      name: '关于',
       path: '/about',
     },
     {
-      name: 'Uses',
+      name: '装备',
       path: '/uses',
     },
   ],
@@ -25,10 +21,6 @@ const footerLinks = [
     {
       name: 'GitHub',
       path: `https://github.com/${CONFIG.GITHUB}`,
-    },
-    {
-      name: 'X',
-      path: `https://x.com/${CONFIG.TWITTER}`,
     },
   ],
 ]
@@ -60,7 +52,7 @@ const FooterBanner = () => {
   )
 }
 
-const Footer: React.FC = () => {
+export const Footer: React.FC = () => {
   return (
     <footer className="border-t border-gray-200 dark:border-gray-800">
       <Container className="max-w-screen-md flex flex-col space-y-8 py-12">
@@ -70,5 +62,3 @@ const Footer: React.FC = () => {
     </footer>
   )
 }
-
-export default Footer

@@ -1,21 +1,19 @@
-@import url('./tailwind.css');
-
 :root {
   /* background color */
-  --prism-color-background: oklch(98.4% 0.003 247.858);
+  --prism-color-background: theme(colors.slate.50);
 
   /* base color */
-  --prism-color-base-primary: oklch(37.2% 0.044 257.287);
-  --prism-color-base-secondary: oklch(55.4% 0.046 257.417);
+  --prism-color-base-primary: theme(colors.slate.700);
+  --prism-color-base-secondary: theme(colors.slate.500);
 
   /* tokens color */
-  --prism-color-function: oklch(49.6% 0.265 301.924);
-  --prism-color-keyword: oklch(50.5% 0.213 27.518);
-  --prism-color-number: oklch(54.1% 0.281 293.009);
-  --prism-color-string: oklch(54.6% 0.245 262.881);
-  --prism-color-tag: oklch(52.7% 0.154 150.069);
-  --prism-color-parameter: oklch(55.3% 0.195 38.402);
-  --prism-color-property-access: oklch(48.8% 0.243 264.376);
+  --prism-color-function: theme(colors.purple.700);
+  --prism-color-keyword: theme(colors.red.700);
+  --prism-color-number: theme(colors.violet.600);
+  --prism-color-string: theme(colors.blue.600);
+  --prism-color-tag: theme(colors.green.700);
+  --prism-color-parameter: theme(colors.orange.700);
+  --prism-color-property-access: theme(colors.blue.700);
 
   /* tokens color, from base */
   --prism-color-comment: var(--prism-color-base-secondary);
@@ -28,17 +26,17 @@
   --prism-color-background: #161e31;
 
   /* base color */
-  --prism-color-base-primary: oklch(86.9% 0.022 252.894);
-  --prism-color-base-secondary: oklch(70.4% 0.04 256.788);
+  --prism-color-base-primary: theme(colors.slate.300);
+  --prism-color-base-secondary: theme(colors.slate.400);
 
   /* tokens color */
-  --prism-color-function: oklch(71.4% 0.203 305.504);
-  --prism-color-keyword: oklch(70.4% 0.191 22.216);
-  --prism-color-number: oklch(81.1% 0.111 293.571);
-  --prism-color-string: oklch(80.9% 0.105 251.813);
-  --prism-color-tag: oklch(79.2% 0.209 151.711);
-  --prism-color-parameter: oklch(75% 0.183 55.934);
-  --prism-color-property-access: oklch(70.7% 0.165 254.624);
+  --prism-color-function: theme(colors.purple.400);
+  --prism-color-keyword: theme(colors.red.400);
+  --prism-color-number: theme(colors.violet.300);
+  --prism-color-string: theme(colors.blue.300);
+  --prism-color-tag: theme(colors.green.400);
+  --prism-color-parameter: theme(colors.orange.400);
+  --prism-color-property-access: theme(colors.blue.400);
 
   /* tokens color, from base */
   --prism-color-comment: var(--prism-color-base-secondary);

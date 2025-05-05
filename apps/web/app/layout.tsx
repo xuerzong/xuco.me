@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import ThemeProvider from '@/libs/providers/theme'
-import fonts from '@/fonts'
-import CONFIG from '@/constants/config'
-import Header from './_components/Header'
+import ThemeProvider from 'libs/providers/theme'
+import fonts from 'fonts'
+import CONFIG from 'constants/config'
 import 'styles/index.css'
-import Footer from './_components/Footer'
 import Script from 'next/script'
+import { Header } from 'components/layouts/header'
+import { Footer } from 'components/layouts/footer'
 
 export const metadata: Metadata = {
   metadataBase: new URL(CONFIG.SITE_URL),
@@ -40,17 +40,15 @@ export const metadata: Metadata = {
 
 const Layout = ({ children }: React.PropsWithChildren) => {
   return (
-    <html lang="en" className={fonts.RecursiveFont.className} suppressHydrationWarning>
-      <body
-        className={`${fonts.JetBrainsMono.variable} bg-white text-slate-900 dark:bg-dark dark:text-slate-50`}
-      >
+    <html lang="zh" className={fonts.WorkSansFont.className} suppressHydrationWarning>
+      <body className={`${fonts.JetBrainsMono.variable} bg-background text-foreground`}>
         <Script
           src="https://umami.xuco.me/script.js"
           data-website-id="59860341-b1d7-416c-869d-81daceda703e"
         />
         <ThemeProvider>
           <Header />
-          <main>{children}</main>
+          <main className="pt-12">{children}</main>
           <Footer />
         </ThemeProvider>
       </body>

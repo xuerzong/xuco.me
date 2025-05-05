@@ -44,8 +44,8 @@ const CopyButton: React.FC<CopyBtnProps> = ({ className, onClick }) => {
             className={cls(
               'flex items-center justify-center',
               'w-8 h-8 transition-colors border rounded',
-              'border dark:border-gray-600 rounded',
-              'bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800',
+              'border border-border rounded',
+              'bg-background cursor-pointer',
               className
             )}
             onClick={handleCopy}
@@ -61,13 +61,9 @@ const CopyButton: React.FC<CopyBtnProps> = ({ className, onClick }) => {
         <Tooltip.Portal>
           <Tooltip.Content
             sideOffset={4}
-            className={cls(
-              'text-sm px-2 py-1',
-              'border dark:border-gray-600 rounded',
-              'bg-white dark:bg-gray-700'
-            )}
+            className={cls('text-sm px-2 py-1', 'border border-border rounded', 'bg-background')}
           >
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? '已复制' : '复制'}
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
@@ -83,9 +79,9 @@ const Pre: React.FC<PropsWithChildren> = ({ children }) => {
   }
 
   return (
-    <div ref={preRef} className={cls('relative my-4', 'border rounded dark:border-gray-700')}>
+    <div ref={preRef} className={cls('relative my-4', 'border border-border rounded')}>
       <CopyButton onClick={handleCopy} className="absolute top-2 right-2" />
-      <pre className="m-0 p-4">{children}</pre>
+      <pre className="m-0 p-4 text-sm">{children}</pre>
     </div>
   )
 }
