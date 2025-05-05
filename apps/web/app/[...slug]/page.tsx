@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getAllContents, getFrontmatter, getContent } from 'contents/queries'
-import Hero from 'components/Hero'
 import Container from 'components/ui/container'
 
 interface Params {
@@ -37,7 +36,6 @@ const Page = async ({ params }: Props) => {
 
   return (
     <>
-      <Hero title={content.frontmatter.title} description={content.frontmatter.description} />
       <Container className="mdx max-w-screen-md pb-20">{content.content}</Container>
     </>
   )
