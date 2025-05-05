@@ -4,7 +4,7 @@ import { Link } from './link.new'
 import Pre from './pre.new'
 import H2 from './h2.new'
 import H3 from './h3.new'
-import P from './p'
+import P from './p.new'
 import { Li } from './li'
 import { Ul } from './ul'
 
