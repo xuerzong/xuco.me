@@ -39,7 +39,6 @@
     "string-ts": "^2.0.0",
     "tabler-icons-react": "^1.54.0",
     "tailwind-merge": "^1.12.0",
-    "tailwindcss": "^4.1.4",
     "use-debounce": "^9.0.4"
   },
   "devDependencies": {
@@ -52,7 +51,7 @@
     "postcss": "^8.5.3",
     "postgres": "^3.4.3",
     "prettier": "^3.2.4",
-    "tailwindcss": "^3.4.9",
+    "tailwindcss": "^4.1.4",
     "typescript": "^5.0.4"
   }
 }

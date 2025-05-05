@@ -6,7 +6,7 @@ export const Contact = () => {
     <Container className="max-w-screen-md py-6">
       <h2 className="flex items-center justify-center text-xl font-bold space-x-2 mb-8">
         <span className="text-primary">-</span>
-        <span>联系我</span>
+        <span>Contact Me</span>
         <span className="text-primary">-</span>
       </h2>
       <div className="flex flex-col items-center space-y-1 mb-8">

@@ -5,7 +5,7 @@ import NextImage from 'next/image'
 
 import Container from 'components/ui/container'
 import { Fragment } from 'react'
-import { GridPattern } from '@/components/ui/grid-pattern'
+import { GridPattern } from 'components/ui/grid-pattern'
 
 const animation: Variants = {
   initial: { opacity: 0, translateY: 32 },
@@ -25,20 +25,18 @@ export const Hero: React.FC = () => {
               height={32}
               className="inline-block mr-2"
             />
-            <span>我叫</span>
-            <span className="relative inline-block text-primary">徐聪</span>
+            <span>Hi, I am</span>
+            <span className="relative inline-block text-primary mx-2">Xu Cong</span>
           </motion.h2>
 
           <motion.p className="mb-1" {...animation} transition={{ delay: 0.2 }}>
-            我希望所有爱我的人和我爱的人
-            <span className="text-primary">身体健康</span>,
-          </motion.p>
-
-          <motion.p className="mb-8" {...animation} transition={{ delay: 0.2 }}>
-            还有就是<span className="text-primary">世界和平</span>。
+            I hope that the people I love and those who love me are in
+            <span className="text-primary mx-2">good health</span>
+            and that there is
+            <span className="text-primary mx-2">peace</span>in the world.
           </motion.p>
         </div>
-        <motion.div className="relative" {...animation}>
+        <motion.div className="relative shrink-0" {...animation}>
           <NextImage
             className="relative mb-8 z-10"
             width={180}
