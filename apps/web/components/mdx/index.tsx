@@ -10,6 +10,7 @@ import { Ul } from './ul'
 import { QrCode } from '../qr'
 import { QrCodeEditor } from '../qr/qr-code-editor'
 import { BinaryCode } from '../qr/qr-code-faker'
+import { QRCodeMark, QRCodeMarkCell } from '../qr/qr-code-mark'
 
 type MDXComponents = any
 
@@ -32,6 +33,8 @@ const mdxComponents = {
   QrCode,
   QrCodeEditor,
   BinaryCode,
+  QRCodeMark,
+  QRCodeMarkCell,
 } as MDXComponents
 
 export default mdxComponents

@@ -78,7 +78,7 @@ export const QrCodeFaker: React.FC<QrCodeFakerProps> = ({ highlight = 'Finders' 
 }
 
 interface BinaryCodeProps {
-  value: [[0, 0, 1]]
+  value: number[][]
 }
 
 export const BinaryCode: React.FC<BinaryCodeProps> = ({ value }) => {

@@ -21,28 +21,6 @@ export const QrCodeEditor = () => {
             placeholder="请输入"
           />
         </div>
-
-        <div className="flex flex-col space-y-1">
-          <label className="text-xs font-medium">字符串</label>
-          <Input
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value)
-            }}
-            placeholder="请输入"
-          />
-        </div>
-
-        <div className="flex flex-col space-y-1">
-          <label className="text-xs font-medium">字符串</label>
-          <Input
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value)
-            }}
-            placeholder="请输入"
-          />
-        </div>
       </div>
     </div>
   )

@@ -35,16 +35,10 @@ const Page = async ({ params }: Props) => {
   }
 
   return (
-    <>
-      <div className="sticky top-12 z-10 py-2 bg-background border-b border-border">
-        <Container className="max-w-screen-md">
-          <h1 className="text-3xl font-bold">{content.frontmatter.title}</h1>
-        </Container>
-      </div>
-      <Container className="mdx max-w-screen-md space-x-4 pt-6 pb-20">
-        <div>{content.content}</div>
-      </Container>
-    </>
+    <Container className="mdx max-w-screen-md space-x-4 pt-6 pb-20">
+      <h1 className="text-3xl font-bold">{content.frontmatter.title}</h1>
+      <div>{content.content}</div>
+    </Container>
   )
 }
 
