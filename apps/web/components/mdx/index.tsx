@@ -7,10 +7,7 @@ import H3 from './h3.new'
 import P from './p.new'
 import { Li } from './li'
 import { Ul } from './ul'
-import { QrCode } from '../qr'
-import { QrCodeEditor } from '../qr/qr-code-editor'
-import { BinaryCode } from '../qr/qr-code-faker'
-import { QRCodeMark, QRCodeMarkCell } from '../qr/qr-code-mark'
+import * as qr from '../qr'
 
 type MDXComponents = any
 
@@ -28,13 +25,9 @@ const mdxComponents = {
   li: Li,
   ul: Ul,
   ol: (props: React.OlHTMLAttributes<HTMLOListElement>) => {
-    return <ol className={`list-decimal list-inside space-y-2`} {...props} />
+    return <ol className={`list-decimal list-inside space-y-2 mb-4`} {...props} />
   },
-  QrCode,
-  QrCodeEditor,
-  BinaryCode,
-  QRCodeMark,
-  QRCodeMarkCell,
+  ...qr,
 } as MDXComponents
 
 export default mdxComponents
