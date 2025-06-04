@@ -91,29 +91,32 @@ export const getMaskNo = (cells: number[][]) => {
   return `${cells[8][2]}${cells[8][3]}${cells[8][4]}`
 }
 
-interface PathSegment {
+export interface PathSegment {
   x1: number
   y1: number
   x2: number
   y2: number
 }
 
-// 生成QR码读取路径
+interface TraversalRecord {
+  position: Position
+  order: number
+}
+
 export const generateReadPaths = (): PathSegment[] => {
   const { size, cellWidth, cellHeight } = QR_CONFIG
   const paths: PathSegment[] = []
+  const traversalHistory: TraversalRecord[] = []
 
-  // 当前处理的两个单元格
   let currentCells: Position[] = [
     { i: size - 1, j: size - 1 },
     { i: size - 1, j: size - 2 },
   ]
 
-  // 移动方向: 1表示向上, -1表示向下
+  let order = 0
+
   let direction = 1
-  // 已处理的单元格数量
   let processedCells = 0
-  // 总单元格数量
   const totalCells = size * size
 
   interface PathPoint {
@@ -121,7 +124,6 @@ export const generateReadPaths = (): PathSegment[] => {
     y: number
   }
 
-  // 辅助函数: 根据位置计算中心点坐标
   const getCenterPoint = ({ i, j }: Position): PathPoint => ({
     x: j * cellWidth + cellWidth / 2,
     y: i * cellHeight + cellHeight / 2,
@@ -149,6 +151,16 @@ export const generateReadPaths = (): PathSegment[] => {
   const isInSpecialRegion = (pos: Position): boolean => {
     return Object.values(featureFunctions).some((func) => func(pos))
   }
+
+  const recordTraversal = (cell: Position) => {
+    traversalHistory.push({
+      position: cell,
+      order,
+    })
+    order += 1
+  }
+
+  currentCells.forEach(recordTraversal)
 
   while (processedCells < totalCells) {
     const [p1, p2] = currentCells.map(getCenterPoint)
@@ -189,6 +201,7 @@ export const generateReadPaths = (): PathSegment[] => {
       nextCells = getNextCells(nextCells, iStep, jStep)
     }
 
+    nextCells.forEach(recordTraversal)
     const p3 = getCenterPoint(currentCells[1])
     const p4 = getCenterPoint(nextCells[0])
     paths.push({ x1: p3.x, y1: p3.y, x2: p4.x, y2: p4.y })
@@ -197,5 +210,100 @@ export const generateReadPaths = (): PathSegment[] => {
     processedCells += 2
   }
 
+  console.log('Traversal History:', traversalHistory)
+
   return paths
+}
+
+export const getReadPoint = (): TraversalRecord[] => {
+  const { size } = QR_CONFIG
+  const traversalHistory: TraversalRecord[] = []
+
+  let currentCells: Position[] = [
+    { i: size - 1, j: size - 1 },
+    { i: size - 1, j: size - 2 },
+  ]
+
+  let order = 0
+
+  let direction = 1
+  let processedCells = 0
+  const totalCells = size * size
+
+  const getNextCells = (current: Position[], iStep: number, jStep: number): Position[] => {
+    const next = current.map(({ i, j }) => ({
+      i: i - iStep,
+      j: j - jStep,
+    }))
+
+    const [right, left] = next
+
+    // separators
+    if (right.j === 6) {
+      return next.map(({ i, j }) => ({
+        i,
+        j: j - 1,
+      }))
+    }
+
+    return next
+  }
+
+  const isInSpecialRegion = (pos: Position): boolean => {
+    return Object.values(featureFunctions).some((func) => func(pos))
+  }
+
+  const recordTraversal = (cell: Position) => {
+    traversalHistory.push({
+      position: cell,
+      order,
+    })
+    order += 1
+  }
+
+  currentCells.forEach(recordTraversal)
+
+  while (processedCells < totalCells) {
+    let iStep = direction
+    let jStep = 0
+
+    if (
+      (direction === 1 && currentCells[0].i === 0) ||
+      (direction === -1 && currentCells[0].i === size - 1)
+    ) {
+      direction *= -1
+      jStep = 2
+      iStep = 0
+    }
+
+    let nextCells = getNextCells(currentCells, iStep, jStep)
+
+    while (
+      processedCells < totalCells &&
+      (isInSpecialRegion(nextCells[0]) || isInSpecialRegion(nextCells[1]))
+    ) {
+      processedCells += 2
+
+      iStep = direction
+      jStep = 0
+
+      if (
+        (direction === 1 && nextCells[0].i === 0) ||
+        (direction === -1 && nextCells[0].i === size - 1)
+      ) {
+        direction *= -1
+        jStep = 2
+        iStep = 0
+      }
+
+      nextCells = getNextCells(nextCells, iStep, jStep)
+    }
+
+    nextCells.forEach(recordTraversal)
+
+    currentCells = nextCells
+    processedCells += 2
+  }
+
+  return traversalHistory
 }
