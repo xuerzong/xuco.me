@@ -101,12 +101,12 @@ export interface PathSegment {
 interface TraversalRecord {
   position: Position
   order: number
+  direction: number
 }
 
 export const generateReadPaths = (): PathSegment[] => {
   const { size, cellWidth, cellHeight } = QR_CONFIG
   const paths: PathSegment[] = []
-  const traversalHistory: TraversalRecord[] = []
 
   let currentCells: Position[] = [
     { i: size - 1, j: size - 1 },
@@ -152,16 +152,6 @@ export const generateReadPaths = (): PathSegment[] => {
     return Object.values(featureFunctions).some((func) => func(pos))
   }
 
-  const recordTraversal = (cell: Position) => {
-    traversalHistory.push({
-      position: cell,
-      order,
-    })
-    order += 1
-  }
-
-  currentCells.forEach(recordTraversal)
-
   while (processedCells < totalCells) {
     const [p1, p2] = currentCells.map(getCenterPoint)
     paths.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y })
@@ -201,7 +191,6 @@ export const generateReadPaths = (): PathSegment[] => {
       nextCells = getNextCells(nextCells, iStep, jStep)
     }
 
-    nextCells.forEach(recordTraversal)
     const p3 = getCenterPoint(currentCells[1])
     const p4 = getCenterPoint(nextCells[0])
     paths.push({ x1: p3.x, y1: p3.y, x2: p4.x, y2: p4.y })
@@ -209,8 +198,6 @@ export const generateReadPaths = (): PathSegment[] => {
     currentCells = nextCells
     processedCells += 2
   }
-
-  console.log('Traversal History:', traversalHistory)
 
   return paths
 }
@@ -254,9 +241,13 @@ export const getReadPoint = (): TraversalRecord[] => {
   }
 
   const recordTraversal = (cell: Position) => {
+    if (cell.i < 0 || cell.i > QR_CONFIG.size || cell.j < 0 || cell.j > QR_CONFIG.size) {
+      return
+    }
     traversalHistory.push({
       position: cell,
       order,
+      direction,
     })
     order += 1
   }
@@ -306,4 +297,81 @@ export const getReadPoint = (): TraversalRecord[] => {
   }
 
   return traversalHistory
+}
+
+export const getRectPaths = (points: TraversalRecord[][]) => {
+  const paths: PathSegment[] = []
+  points.forEach(([point1, point2], index) => {
+    let drawBottom =
+      (index === 0 && point1.direction === 1) ||
+      (index === points.length - 1 && point1.direction === -1)
+    let drawTop =
+      (index === 0 && point1.direction === -1) ||
+      (index === points.length - 1 && point1.direction === 1)
+
+    const [prePoint1] = points[index - 1] || []
+    const [nextPoint1] = points[index + 1] || []
+    const direction = point1.direction
+    const nextDirection = nextPoint1?.direction || direction
+    const preDirection = prePoint1?.direction || direction
+
+    if ((direction === 1 && nextDirection === -1) || (direction === -1 && preDirection === 1)) {
+      drawTop = true
+    }
+
+    if ((direction === -1 && nextDirection === 1) || (direction === 1 && preDirection === -1)) {
+      drawBottom = true
+    }
+
+    paths.push(
+      {
+        x1: point1.position.j * QR_CONFIG.cellWidth + QR_CONFIG.cellWidth,
+        y1: point1.position.i * QR_CONFIG.cellHeight,
+        y2: point1.position.i * QR_CONFIG.cellHeight + QR_CONFIG.cellHeight,
+        x2: point1.position.j * QR_CONFIG.cellWidth + QR_CONFIG.cellWidth,
+      },
+      {
+        x1: point2.position.j * QR_CONFIG.cellWidth,
+        y1: point2.position.i * QR_CONFIG.cellHeight,
+        y2: point2.position.i * QR_CONFIG.cellHeight + QR_CONFIG.cellHeight,
+        x2: point2.position.j * QR_CONFIG.cellWidth,
+      }
+    )
+
+    if (drawBottom) {
+      paths.push(
+        {
+          x1: point1.position.j * QR_CONFIG.cellWidth + QR_CONFIG.cellWidth,
+          y1: point1.position.i * QR_CONFIG.cellHeight + QR_CONFIG.cellHeight,
+          x2: point2.position.j * QR_CONFIG.cellWidth + QR_CONFIG.cellWidth,
+          y2: point2.position.i * QR_CONFIG.cellHeight + QR_CONFIG.cellHeight,
+        },
+        {
+          x1: point1.position.j * QR_CONFIG.cellWidth,
+          y1: point1.position.i * QR_CONFIG.cellHeight + QR_CONFIG.cellHeight,
+          x2: point2.position.j * QR_CONFIG.cellWidth,
+          y2: point2.position.i * QR_CONFIG.cellHeight + QR_CONFIG.cellHeight,
+        }
+      )
+    }
+
+    if (drawTop) {
+      paths.push(
+        {
+          x1: point1.position.j * QR_CONFIG.cellWidth + QR_CONFIG.cellWidth,
+          y1: point1.position.i * QR_CONFIG.cellHeight,
+          x2: point2.position.j * QR_CONFIG.cellWidth + QR_CONFIG.cellWidth,
+          y2: point2.position.i * QR_CONFIG.cellHeight,
+        },
+        {
+          x1: point1.position.j * QR_CONFIG.cellWidth,
+          y1: point1.position.i * QR_CONFIG.cellHeight,
+          x2: point2.position.j * QR_CONFIG.cellWidth,
+          y2: point2.position.i * QR_CONFIG.cellHeight,
+        }
+      )
+    }
+  })
+
+  return paths
 }

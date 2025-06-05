@@ -11,15 +11,9 @@ import {
   getReadPoint,
   PathSegment,
   QR_CONFIG,
+  getRectPaths,
 } from './utils'
-
-const chunk = <T = any,>(arr: T[], size: number): T[][] => {
-  const result: T[][] = []
-  for (let i = 0; i < arr.length; i += size) {
-    result.push(arr.slice(i, i + size))
-  }
-  return result
-}
+import { chunk } from 'libs/utils/array'
 
 const featureColors: Record<string, string> = {
   finders: 'rgba(239, 68, 68, 0.6)', // red
@@ -57,7 +51,7 @@ export const QRCodeDecoder: React.FC<QRCodeDecoderProps> = ({
 }) => {
   const cells = useMemo(
     () =>
-      qrcodegen.QrCode.encodeText('hello world', qrcodegen.QrCode.Ecc.LOW)
+      qrcodegen.QrCode.encodeText('hello', qrcodegen.QrCode.Ecc.LOW)
         .getModules()
         .map((row) => row.map((cell) => (cell ? 1 : 0))),
     []
@@ -99,129 +93,29 @@ export const QRCodeDecoder: React.FC<QRCodeDecoderProps> = ({
     }
   }
 
+  const readPoints = useMemo(() => {
+    return getReadPoint()
+  }, [])
+
   const readPaths = useMemo(() => {
     const paths = generateReadPaths()
     return paths
   }, [targetCells])
 
-  const readPoints = useMemo(() => {
-    return getReadPoint()
-  }, [])
-
   const encodingModePaths = useMemo(() => {
-    const size = QR_CONFIG.size
-    const points = chunk(readPoints.slice(0, 4), 2)
-    const paths: PathSegment[] = []
-    points.forEach(([point1, point2], index) => {
-      const isFirst = index === 0
-      const isLast = index === points.length - 1
-      paths.push(
-        {
-          x1: point1.position.j * cellWidth + cellWidth,
-          y1: point1.position.i * cellHeight,
-          y2: point1.position.i * cellHeight + cellHeight,
-          x2: point1.position.j * cellWidth + cellWidth,
-        },
-        {
-          x1: point2.position.j * cellWidth,
-          y1: point2.position.i * cellHeight,
-          y2: point2.position.i * cellHeight + cellHeight,
-          x2: point2.position.j * cellWidth,
-        }
-      )
-
-      if (isFirst) {
-        paths.push(
-          {
-            x1: point1.position.j * cellWidth + cellWidth,
-            y1: point1.position.i * cellHeight + cellHeight,
-            x2: point2.position.j * cellWidth + cellWidth,
-            y2: point2.position.i * cellHeight + cellHeight,
-          },
-          {
-            x1: point1.position.j * cellWidth,
-            y1: point1.position.i * cellHeight + cellHeight,
-            x2: point2.position.j * cellWidth,
-            y2: point2.position.i * cellHeight + cellHeight,
-          }
-        )
-      }
-
-      if (isLast) {
-        paths.push(
-          {
-            x1: point1.position.j * cellWidth + cellWidth,
-            y1: point1.position.i * cellHeight,
-            x2: point2.position.j * cellWidth + cellWidth,
-            y2: point2.position.i * cellHeight,
-          },
-          {
-            x1: point1.position.j * cellWidth,
-            y1: point1.position.i * cellHeight,
-            x2: point2.position.j * cellWidth,
-            y2: point2.position.i * cellHeight,
-          }
-        )
-      }
-    })
-    return paths
+    return getRectPaths(chunk(readPoints.slice(0, 4), 2))
   }, [readPoints])
 
   const decodingLengthPaths = useMemo(() => {
-    const size = QR_CONFIG.size
-    const points = chunk(readPoints.slice(4, 12), 2)
-    const paths: PathSegment[] = []
-    points.forEach(([point1, point2], index) => {
-      const isFirst = index === 0
-      const isLast = index === points.length - 1
-      paths.push(
-        {
-          x1: point1.position.j * cellWidth + cellWidth,
-          y1: point1.position.i * cellHeight,
-          y2: point1.position.i * cellHeight + cellHeight,
-          x2: point1.position.j * cellWidth + cellWidth,
-        },
-        {
-          x1: point2.position.j * cellWidth,
-          y1: point2.position.i * cellHeight,
-          y2: point2.position.i * cellHeight + cellHeight,
-          x2: point2.position.j * cellWidth,
-        }
-      )
+    return getRectPaths(chunk(readPoints.slice(4, 12), 2))
+  }, [readPoints])
 
-      if (isFirst) {
-        paths.push(
-          {
-            x1: point1.position.j * cellWidth + cellWidth,
-            y1: point1.position.i * cellHeight + cellHeight,
-            x2: point2.position.j * cellWidth + cellWidth,
-            y2: point2.position.i * cellHeight + cellHeight,
-          },
-          {
-            x1: point1.position.j * cellWidth,
-            y1: point1.position.i * cellHeight + cellHeight,
-            x2: point2.position.j * cellWidth,
-            y2: point2.position.i * cellHeight + cellHeight,
-          }
-        )
-      }
-
-      if (isLast) {
-        paths.push(
-          {
-            x1: point1.position.j * cellWidth + cellWidth,
-            y1: point1.position.i * cellHeight,
-            x2: point2.position.j * cellWidth + cellWidth,
-            y2: point2.position.i * cellHeight,
-          },
-          {
-            x1: point1.position.j * cellWidth,
-            y1: point1.position.i * cellHeight,
-            x2: point2.position.j * cellWidth,
-            y2: point2.position.i * cellHeight,
-          }
-        )
-      }
+  const byteContentPaths = useMemo(() => {
+    const bytePoints = chunk(readPoints.slice(12), 8)
+    console.log(readPoints)
+    let paths: PathSegment[] = []
+    bytePoints.forEach((points) => {
+      paths.push(...getRectPaths(chunk(points, 2)))
     })
     return paths
   }, [readPoints])
@@ -287,6 +181,16 @@ export const QRCodeDecoder: React.FC<QRCodeDecoderProps> = ({
               key={`decoding-${index}`}
               {...path}
               stroke="green"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          ))}
+
+          {byteContentPaths.map((path, index) => (
+            <line
+              key={`decoding-${index}`}
+              {...path}
+              stroke="purple"
               strokeWidth="2"
               strokeLinecap="round"
             />
