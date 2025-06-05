@@ -1,12 +1,12 @@
 export const qrMatrix = new Array(21).fill(0).map(() => new Array(21).fill(0))
 export const maskMatrix = new Array(6).fill(0).map(() => new Array(6).fill(0))
 
-interface Position {
+export interface Position {
   i: number
   j: number
 }
 
-type MarkFunction = (pos: Position) => boolean
+export type MarkFunction = (pos: Position) => boolean
 
 export const allFeatures = [
   'finders',
@@ -87,6 +87,48 @@ export const featureFunctions: Record<string, MarkFunction> = {
   },
 }
 
+export interface QRConfig {
+  size: number
+  cellSize: number
+}
+
+export const getFeatureFunctions = (config: {
+  size: number
+  cellSize: number
+}): Record<string, MarkFunction> => {
+  return {
+    finders: ({ i, j }) => {
+      return (i < 7 && j < 7) || (i < 7 && j >= config.size - 7) || (i >= config.size - 7 && j < 7)
+    },
+    separators: ({ i, j }) => {
+      return (
+        (i === 7 && j <= 7) ||
+        (j === 7 && i <= 7) ||
+        (i >= config.size - 7 && j === 7) ||
+        (i === config.size - 8 && j <= 7) ||
+        (i === 7 && j >= config.size - 7) ||
+        (j === config.size - 8 && i <= 7)
+      )
+    },
+    timingPatterns: ({ i, j }) => {
+      return (
+        (i === 6 && j >= 7 && j < config.size - 7) || (j === 6 && i >= 7 && i < config.size - 7)
+      )
+    },
+    formatInformation: ({ i, j }) => {
+      return (
+        (j <= 8 && i === 8) ||
+        (j >= config.size - 8 && i === 8) ||
+        (i <= 7 && j === 8) ||
+        (i >= config.size - 7 && j === 8)
+      )
+    },
+    darkModule: ({ i, j }) => {
+      return j === 8 && i === config.size - 8
+    },
+  }
+}
+
 export const getMaskNo = (cells: number[][]) => {
   return `${cells[8][2]}${cells[8][3]}${cells[8][4]}`
 }
@@ -104,20 +146,9 @@ interface TraversalRecord {
   direction: number
 }
 
-export const generateReadPaths = (): PathSegment[] => {
-  const { size, cellWidth, cellHeight } = QR_CONFIG
+export const generateReadPaths = (points: TraversalRecord[]): PathSegment[] => {
+  const { cellWidth, cellHeight } = QR_CONFIG
   const paths: PathSegment[] = []
-
-  let currentCells: Position[] = [
-    { i: size - 1, j: size - 1 },
-    { i: size - 1, j: size - 2 },
-  ]
-
-  let order = 0
-
-  let direction = 1
-  let processedCells = 0
-  const totalCells = size * size
 
   interface PathPoint {
     x: number
@@ -129,74 +160,17 @@ export const generateReadPaths = (): PathSegment[] => {
     y: i * cellHeight + cellHeight / 2,
   })
 
-  const getNextCells = (current: Position[], iStep: number, jStep: number): Position[] => {
-    const next = current.map(({ i, j }) => ({
-      i: i - iStep,
-      j: j - jStep,
-    }))
-
-    const [right, left] = next
-
-    // separators
-    if (right.j === 6) {
-      return next.map(({ i, j }) => ({
-        i,
-        j: j - 1,
-      }))
-    }
-
-    return next
-  }
-
-  const isInSpecialRegion = (pos: Position): boolean => {
-    return Object.values(featureFunctions).some((func) => func(pos))
-  }
-
-  while (processedCells < totalCells) {
-    const [p1, p2] = currentCells.map(getCenterPoint)
-    paths.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y })
-
-    let iStep = direction
-    let jStep = 0
-
-    if (
-      (direction === 1 && currentCells[0].i === 0) ||
-      (direction === -1 && currentCells[0].i === size - 1)
-    ) {
-      direction *= -1
-      jStep = 2
-      iStep = 0
-    }
-
-    let nextCells = getNextCells(currentCells, iStep, jStep)
-
-    while (
-      processedCells < totalCells &&
-      (isInSpecialRegion(nextCells[0]) || isInSpecialRegion(nextCells[1]))
-    ) {
-      processedCells += 2
-
-      iStep = direction
-      jStep = 0
-
-      if (
-        (direction === 1 && nextCells[0].i === 0) ||
-        (direction === -1 && nextCells[0].i === size - 1)
-      ) {
-        direction *= -1
-        jStep = 2
-        iStep = 0
-      }
-
-      nextCells = getNextCells(nextCells, iStep, jStep)
-    }
-
-    const p3 = getCenterPoint(currentCells[1])
-    const p4 = getCenterPoint(nextCells[0])
-    paths.push({ x1: p3.x, y1: p3.y, x2: p4.x, y2: p4.y })
-
-    currentCells = nextCells
-    processedCells += 2
+  for (let i = 0; i < points.length - 1; i++) {
+    const currentPoint = points[i]
+    const nextPoint = points[i + 1]
+    const p1 = getCenterPoint(currentPoint.position)
+    const p2 = getCenterPoint(nextPoint.position)
+    paths.push({
+      x1: p1.x,
+      x2: p2.x,
+      y1: p1.y,
+      y2: p2.y,
+    })
   }
 
   return paths

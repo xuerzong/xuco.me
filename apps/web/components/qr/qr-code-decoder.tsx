@@ -1,19 +1,8 @@
 'use client'
 
-import { qrcodegen } from 'libs/qr/codegen'
-import { use, useMemo } from 'react'
-import {
-  featureFunctions,
-  allFeatures,
-  maskFunctions,
-  getMaskNo,
-  generateReadPaths,
-  getReadPoint,
-  PathSegment,
-  QR_CONFIG,
-  getRectPaths,
-} from './utils'
-import { chunk } from 'libs/utils/array'
+import { useMemo } from 'react'
+import { featureFunctions, allFeatures, maskFunctions, getMaskNo } from './utils'
+import { useQRCode } from './provider'
 
 const featureColors: Record<string, string> = {
   finders: 'rgba(239, 68, 68, 0.6)', // red
@@ -23,13 +12,11 @@ const featureColors: Record<string, string> = {
   darkModule: 'red', // red
 }
 
-const cellWidth = 10
-const cellHeight = 10
-
 interface QRCodeDecoderProps {
+  value: string
   features?: string[]
-  applyMask?: boolean
-  showReadPaths?: boolean
+  xorMask?: boolean
+  paths?: string[]
 }
 
 const isFeature = ({ i, j }: { i: number; j: number }) => {
@@ -46,23 +33,17 @@ const isFeature = ({ i, j }: { i: number; j: number }) => {
 
 export const QRCodeDecoder: React.FC<QRCodeDecoderProps> = ({
   features = [],
-  applyMask = false,
-  showReadPaths = false,
+  xorMask = false,
+  paths = [],
 }) => {
-  const cells = useMemo(
-    () =>
-      qrcodegen.QrCode.encodeText('hello', qrcodegen.QrCode.Ecc.LOW)
-        .getModules()
-        .map((row) => row.map((cell) => (cell ? 1 : 0))),
-    []
-  )
+  const { qr, QR_CONFIG } = useQRCode()
 
   const targetCells = useMemo(() => {
-    if (!applyMask) {
-      return cells
+    if (!xorMask) {
+      return qr.cells
     }
 
-    return cells.map((row, i) =>
+    return qr.cells.map((row, i) =>
       row.map((cell, j) => {
         let feature = ''
         for (let k = 0; k < allFeatures.length; k++) {
@@ -74,68 +55,75 @@ export const QRCodeDecoder: React.FC<QRCodeDecoderProps> = ({
         }
         return isFeature({ i, j })
           ? cell
-          : (maskFunctions[getMaskNo(cells)]({ i, j }) ? 1 : 0) ^ cell
+          : (maskFunctions[getMaskNo(qr.cells)]({ i, j }) ? 1 : 0) ^ cell
       })
     )
-  }, [cells, applyMask])
+  }, [qr, xorMask])
 
   const getProperties = (x: number, y: number) => {
     let feature = ''
-    for (let i = 0; i < features.length; i++) {
-      const key = features[i]
-      if (featureFunctions[key]({ i: y, j: x })) {
-        feature = key
-        break
-      }
+
+    if (qr.isFinders({ i: y, j: x })) {
+      feature = 'finders'
     }
+
+    if (qr.isDarkModule({ i: y, j: x })) {
+      feature = 'darkModule'
+    }
+
+    if (qr.isSeparators({ i: y, j: x })) {
+      feature = 'separators'
+    }
+
+    if (qr.isTimingPatterns({ i: y, j: x })) {
+      feature = 'timingPatterns'
+    }
+
+    if (qr.isFormatInformation({ i: y, j: x })) {
+      feature = 'formatInformation'
+    }
+
     return {
       fill: featureColors[feature] || 'transparent',
     }
   }
 
-  const readPoints = useMemo(() => {
-    return getReadPoint()
-  }, [])
+  const traversalRecord = useMemo(() => {
+    return qr.getTraversalRecord()
+  }, [qr])
 
   const readPaths = useMemo(() => {
-    const paths = generateReadPaths()
-    return paths
-  }, [targetCells])
+    return qr.generateReadPaths()
+  }, [qr])
 
   const encodingModePaths = useMemo(() => {
-    return getRectPaths(chunk(readPoints.slice(0, 4), 2))
-  }, [readPoints])
+    return qr.generateEncodingModePaths()
+  }, [qr])
 
   const decodingLengthPaths = useMemo(() => {
-    return getRectPaths(chunk(readPoints.slice(4, 12), 2))
-  }, [readPoints])
+    return qr.generateDecodingLengthPaths()
+  }, [qr])
 
   const byteContentPaths = useMemo(() => {
-    const bytePoints = chunk(readPoints.slice(12), 8)
-    console.log(readPoints)
-    let paths: PathSegment[] = []
-    bytePoints.forEach((points) => {
-      paths.push(...getRectPaths(chunk(points, 2)))
-    })
-    return paths
-  }, [readPoints])
+    return qr.generateDecodingContentPath()
+  }, [qr])
 
   return (
     <div className="relative flex items-center justify-center cursor-pointer">
       <div className="inline-block p-6 my-4 bg-white rounded">
         <svg
-          viewBox={`-10 -10 ${targetCells[0].length * cellWidth + 2 * cellWidth} ${targetCells.length * cellHeight + 2 * cellHeight}`}
-          width={targetCells[0].length * cellWidth}
-          height={targetCells.length * cellHeight}
+          viewBox={`-10 -10 ${targetCells[0].length * QR_CONFIG.cellSize + 2 * QR_CONFIG.cellSize} ${targetCells.length * QR_CONFIG.cellSize + 2 * QR_CONFIG.cellSize}`}
+          width={targetCells[0].length * QR_CONFIG.cellSize}
+          height={targetCells.length * QR_CONFIG.cellSize}
         >
           {targetCells.map((row, rowIndex) =>
             row.map((col, colIndex) => (
               <rect
                 key={`${rowIndex}-${colIndex}`}
-                x={colIndex * cellWidth}
-                y={rowIndex * cellHeight}
-                width={cellWidth}
-                height={cellHeight}
+                x={colIndex * QR_CONFIG.cellSize}
+                y={rowIndex * QR_CONFIG.cellSize}
+                width={QR_CONFIG.cellSize}
+                height={QR_CONFIG.cellSize}
                 fill={col ? 'black' : 'white'}
               />
             ))
@@ -145,16 +133,16 @@ export const QRCodeDecoder: React.FC<QRCodeDecoderProps> = ({
             row.map((col, colIndex) => (
               <rect
                 key={`${rowIndex}-${colIndex}`}
-                x={colIndex * cellWidth}
-                y={rowIndex * cellHeight}
-                width={cellWidth}
-                height={cellHeight}
+                x={colIndex * QR_CONFIG.cellSize}
+                y={rowIndex * QR_CONFIG.cellSize}
+                width={QR_CONFIG.cellSize}
+                height={QR_CONFIG.cellSize}
                 {...(getProperties(colIndex, rowIndex) || {})}
               />
             ))
           )}
 
-          {showReadPaths &&
+          {paths.includes('readOrder') &&
             readPaths.map((path, index) => (
               <line
                 key={index}
@@ -166,35 +154,38 @@ export const QRCodeDecoder: React.FC<QRCodeDecoderProps> = ({
               />
             ))}
 
-          {encodingModePaths.map((path, index) => (
-            <line
-              key={`encoding-${index}`}
-              {...path}
-              stroke="blue"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          ))}
+          {paths.includes('encodingMode') &&
+            encodingModePaths.map((path, index) => (
+              <line
+                key={`encoding-${index}`}
+                {...path}
+                stroke="blue"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            ))}
 
-          {decodingLengthPaths.map((path, index) => (
-            <line
-              key={`decoding-${index}`}
-              {...path}
-              stroke="green"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          ))}
+          {paths.includes('decodingLength') &&
+            decodingLengthPaths.map((path, index) => (
+              <line
+                key={`decoding-${index}`}
+                {...path}
+                stroke="green"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            ))}
 
-          {byteContentPaths.map((path, index) => (
-            <line
-              key={`decoding-${index}`}
-              {...path}
-              stroke="purple"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          ))}
+          {paths.includes('content') &&
+            byteContentPaths.map((path, index) => (
+              <line
+                key={`decoding-${index}`}
+                {...path}
+                stroke="purple"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            ))}
         </svg>
       </div>
     </div>
