@@ -10,6 +10,7 @@ const featureColors: Record<string, string> = {
   timingPatterns: 'rgba(59, 130, 246, 0.6)', // blue
   formatInformation: 'rgba(234, 179, 8, 0.6)', // yellow
   darkModule: 'red', // red
+  alignmentPatterns: 'rgba(239, 68, 68, 0.6)', // red
 }
 
 interface QRCodeDecoderProps {
@@ -81,6 +82,10 @@ export const QRCodeDecoder: React.FC<QRCodeDecoderProps> = ({
 
     if (qr.isFormatInformation({ i: y, j: x })) {
       feature = 'formatInformation'
+    }
+
+    if (qr.isAlignmentPatterns({ i: y, j: x })) {
+      feature = 'alignmentPatterns'
     }
 
     return {

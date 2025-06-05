@@ -17,7 +17,7 @@ interface QRCodeContextState {
 const QRCodeContext = React.createContext<QRCodeContextState | null>(null)
 
 export const QRCodeProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [QRCodeValue, setQRCodeValue] = useState('Hello world')
+  const [QRCodeValue, setQRCodeValue] = useState('Hello world'.repeat(10))
 
   const qr = useMemo(() => {
     return new QRCode(QRCodeValue)
