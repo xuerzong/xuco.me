@@ -8,7 +8,7 @@
 - [Typescript](https://www.typescriptlang.org/)
 - [Tailwindcss](https://tailwindcss.com/)
 - [RadixUI](https://www.radix-ui.com/)
-- [Framer-motion](https://www.framer.com/motion/)
+- [Motion](https://motion.dev/docs/react)
 - [MDX](https://mdxjs.com/)
 
 ## How to use

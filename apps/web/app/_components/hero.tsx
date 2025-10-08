@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, type Variants } from 'framer-motion'
+import { motion, type Variants } from 'motion/react'
 import NextImage from 'next/image'
 
 import Container from 'components/ui/container'
