@@ -1,28 +1,27 @@
-import Table from './table.new'
+import Table from './table'
 import Image from 'next/image'
-import { Link } from './link.new'
-import Pre from './pre.new'
-import H2 from './h2.new'
-import H3 from './h3.new'
-import P from './p.new'
-import { Li } from './li'
-import { Ul } from './ul'
+import { Link } from './link'
+import Pre from './pre'
 
 type MDXComponents = any
 
 const mdxComponents = {
-  p: P,
+  p: (props) => <p className="mb-4 text-current" {...props} />,
   a: Link,
   pre: Pre,
   Image,
   table: Table,
-  h2: H2,
-  h3: H3,
+  h2: (props) => <h2 className="text-primary-500 text-2xl font-bold mt-8 mb-8" {...props} />,
+  h3: (props) => <h3 className="text-xl font-bold mt-6 mb-3" {...props} />,
   tr: Table.Tr,
   th: Table.Th,
   td: Table.Td,
-  li: Li,
-  ul: Ul,
+  li: ({ className = '', ...restProps }) => (
+    <li className={`list-disc list-inside pl-4 text-sm ${className}`} {...restProps} />
+  ),
+  ul: ({ className = '', ...restProps }) => (
+    <ul className={`list-disc list-inside space-y-2 ${className}`} {...restProps} />
+  ),
 } as MDXComponents
 
 export default mdxComponents
