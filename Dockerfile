@@ -4,8 +4,8 @@ FROM node:22-alpine as base
 FROM base as builder
 WORKDIR /app
 COPY . .
-RUN yarn install --frozen-lockfile
-RUN yarn build
+RUN npm ci
+RUN npm run build
 
 
 
