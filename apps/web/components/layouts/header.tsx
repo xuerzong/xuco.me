@@ -12,7 +12,7 @@ export const Header = () => {
   return (
     <header
       className={cls(
-        'fixed w-full z-50 overflow-hidden h-12 bg-background/20 border-b border-border transition-height duration-150',
+        'fixed w-full z-50 overflow-hidden h-12 bg-background/20 border-b border-border',
         'backdrop-blur-md backdrop-filter'
       )}
     >

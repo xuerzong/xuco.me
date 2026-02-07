@@ -36,7 +36,10 @@ const compileMdx = async (source: VFileCompatible, options: MarkdownOptions = {}
     rehypePlugins: options.rehypePlugins ?? [],
   })
     .then((content) => content)
-    .catch(() => 'Error: UnexpectedMdxError')
+    .catch((e) => {
+      console.log(e)
+      throw new Error('UnexpectedMdxError')
+    })
 
   const hydateFn = new Function('jsxRuntime', 'frontmatter', compiledSource.toString())
   const MDXComponent = hydateFn(isDev ? jsxDevRuntime : jsxRuntime, frontmatter)

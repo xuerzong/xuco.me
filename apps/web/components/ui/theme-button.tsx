@@ -19,7 +19,7 @@ export const ThemeButton: React.FC = () => {
     <motion.button
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
-      className="relative z-40 md:z-0 p-2 bg-gray-200 dark:bg-gray-900 rounded"
+      className="relative z-40 md:z-0 p-2 bg-primary text-primary-foreground rounded"
       aria-label="theme-btn"
       onClick={() => setTheme(isDarkTheme ? Theme.Light : Theme.Dark)}
     >

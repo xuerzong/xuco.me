@@ -26,14 +26,9 @@ const Table: React.FC<React.PropsWithChildren> = ({ children }) => {
           max-width: 200px;
         }
 
-        .dark .mdx-table table thead tr {
-          border-bottom: 1px solid;
-          border-color: rgb(31, 41, 55)
-        }
-
         .mdx-table table thead tr {
           border-bottom: 1px solid;
-          border-color: rgb(229, 231, 235)
+          border-color: var(--color-border);
         }
     `}</style>
       <div className="mdx-table border border-border rounded-md">

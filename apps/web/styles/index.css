@@ -1,2 +1,8 @@
 @import url('./tailwind.css');
 @import url('./prisma.css');
+
+html,
+body {
+  overscroll-behavior: none;
+  font-size: 14px;
+}

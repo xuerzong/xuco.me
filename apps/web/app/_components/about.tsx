@@ -120,7 +120,7 @@ const secs = [
 
 export const About = () => {
   return (
-    <Container className="max-w-screen-md py-6">
+    <Container className="max-w-3xl py-6">
       <h2 className="flex items-center justify-center text-xl font-bold space-x-2 mb-8">
         <span className="text-primary">-</span>
         <span>About Me</span>
@@ -129,7 +129,7 @@ export const About = () => {
 
       <div className="grid grid-cols-3 gap-4">
         {secs.map((sec) => (
-          <div key={sec.key} className={cn('bg-accent p-6 rounded', sec.className)}>
+          <div key={sec.key} className={cn('bg-primary-foreground p-6 rounded', sec.className)}>
             <div className="flex items-center space-x-2 font-bold mb-6">
               {sec.icon}
               <span>{sec.name}</span>

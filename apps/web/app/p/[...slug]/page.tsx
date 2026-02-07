@@ -22,26 +22,21 @@ export const generateMetadata = async ({ params }: Props) => {
 }
 
 export const generateStaticParams = async () => {
-  const pages = await getAllContents('posts')
-  return pages.map((slug) => ({ slug }))
+  const posts = await getAllContents('posts')
+  return posts.map((slug) => ({ slug }))
 }
 
 const Page = async ({ params }: Props) => {
   const { slug = [] } = await params
   const { success, content } = await getContent('posts', slug.join('/'))
-
   if (!success) {
     return notFound()
   }
 
   return (
     <>
-      <div className="sticky top-12 z-10 py-2 bg-background border-b border-border">
-        <Container className="max-w-screen-md">
-          <h1 className="text-3xl font-bold">{content.frontmatter.title}</h1>
-        </Container>
-      </div>
-      <Container className="mdx max-w-screen-md space-x-4 pt-6 pb-20">
+      <Container className="mdx max-w-2xl space-x-4 pt-6 pb-20">
+        <h1 className="text-2xl font-bold mb-6">{content.frontmatter.title}</h1>
         <div>{content.content}</div>
       </Container>
     </>

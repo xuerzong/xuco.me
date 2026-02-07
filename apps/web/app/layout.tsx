@@ -44,8 +44,8 @@ interface LayoutProps {
 
 const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = async ({ children }) => {
   return (
-    <html lang="en-US" className={fonts.WorkSansFont.className} suppressHydrationWarning>
-      <body className={`${fonts.JetBrainsMono.variable} bg-background text-foreground`}>
+    <html lang="en-US" className={fonts.GeistFont.className} suppressHydrationWarning>
+      <body className={`${fonts.GeistMonoFont.variable} bg-background text-foreground`}>
         <Script
           src="https://umami.xuco.me/script.js"
           data-website-id="59860341-b1d7-416c-869d-81daceda703e"

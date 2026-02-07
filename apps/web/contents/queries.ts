@@ -61,6 +61,7 @@ export const getContent = async (
     const markdownContent = await mdx(content, mdxComponents)
     return { success: true, content: markdownContent }
   } catch (error) {
+    console.log(error)
     return { success: false }
   }
 }

@@ -1,0 +1,128 @@
+---
+title: 快速创建一个 AI Chat 聊天应用
+description: 使用 Next.js 和 AI SDK 快速创建一个 AI Chat 聊天应用
+---
+
+太快了！只需一分钟，你就能开发出一个支持流式响应（Streaming）的 AI 聊天应用。
+
+我们将使用 **[Next.js](https://nextjs.org/)** 作为框架，以及 Vercel 推出的 **[AI SDK](https://ai-sdk.dev/)** 来实现。AI SDK 是目前TS/JS开发者集成大模型（LLM）最简单、最强大的工具包。
+
+## 核心步骤：一分钟挑战
+
+### 1. 初始化项目
+
+在终端运行以下命令创建一个新的 Next.js 项目：
+
+```bash
+npx create-next-app@latest ai-app --typescript --tailwind --eslint
+cd ai-app
+```
+
+### 2. 安装 AI SDK 依赖
+
+安装核心依赖及 OpenAI 适配器。由于采用我自己写的 API 代理服务 **[AIProxy Shop](https://aiproxy.shop)** （OpenAI 接口兼容），需安装 @ai-sdk/openai-compatible 以实现接口适配：
+
+```bash
+npm install ai @ai-sdk/openai-compatible
+```
+
+### 3. 配置 API Key
+
+在项目根目录创建 `.env` 文件，并填入你的 API 密钥：
+
+```bash
+AIPROXY_API_KEY=your_api_key_here
+```
+
+### 4. 创建后端路由
+
+创建文件 `app/api/chat/route.ts`。
+
+```typescript
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { convertToModelMessages, streamText, UIMessage } from 'ai'
+
+export const maxDuration = 30
+
+// 创建模型示例
+export const aiproxy = createOpenAICompatible({
+  baseURL: 'https://api.aiproxy.shop/v1',
+  apiKey: process.env.AIPROXY_API_KEY!,
+  name: 'aiproxy',
+})
+
+export async function POST(req: Request) {
+  const { messages }: { messages: UIMessage[] } = await req.json()
+
+  const result = streamText({
+    model: aiproxy('gemini-3-flash'),
+    messages: await convertToModelMessages(messages),
+  })
+
+  return result.toUIMessageStreamResponse()
+}
+```
+
+### 5. 编写聊天界面
+
+修改 `app/page.tsx`。使用 AI SDK 提供的 `useChat` 钩子，它会自动帮你处理消息状态、输入框和流式加载。
+
+```tsx
+'use client'
+
+import { useChat } from '@ai-sdk/react'
+import { useState } from 'react'
+
+export default function Chat() {
+  const [input, setInput] = useState('')
+  const { messages, sendMessage } = useChat()
+  return (
+    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+      {messages.map((message) => (
+        <div key={message.id} className="whitespace-pre-wrap">
+          {message.role === 'user' ? 'User: ' : 'AI: '}
+          {message.parts.map((part, i) => {
+            switch (part.type) {
+              case 'text':
+                return <div key={`${message.id}-${i}`}>{part.text}</div>
+            }
+          })}
+        </div>
+      ))}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          sendMessage({ text: input })
+          setInput('')
+        }}
+      >
+        <input
+          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+          value={input}
+          placeholder="Say something..."
+          onChange={(e) => setInput(e.currentTarget.value)}
+        />
+      </form>
+    </div>
+  )
+}
+```
+
+### 6. 运行应用
+
+现在启动开发服务器：
+
+```bash
+npm run dev
+```
+
+打开浏览器访问 `http://localhost:3000`，你就拥有了一个功能完整的 AI 聊天应用！
+
+## 总结
+
+在 AI 时代，TS/JS开发者有着很明显的优势。借助 Vercel AI SDK 这样的优秀工具，我们可以直接跨越复杂的底层协议，专注于产品逻辑。
+
+不要只把自己定位为一名 Web 开发者，在 AI 赋能下，你就是一名能够独立交付完整 AI 产品的全栈工程师。
+
+下一期我将教大家如何使用 Next.js 和 AI SDK 快速构建知识库。

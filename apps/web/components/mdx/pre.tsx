@@ -1,7 +1,7 @@
 'use client'
 import React, { type PropsWithChildren, useEffect, useRef, useState } from 'react'
 import cls from 'classnames'
-import { ClipboardDocumentIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline'
+import { CopyIcon, CopyCheckIcon } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { useDebounce } from 'use-debounce'
 
@@ -43,25 +43,26 @@ const CopyButton: React.FC<CopyBtnProps> = ({ className, onClick }) => {
             type="button"
             className={cls(
               'flex items-center justify-center',
-              'w-8 h-8 transition-colors border rounded',
+              'w-6 h-6 transition-colors border rounded',
               'border border-border rounded',
               'bg-background cursor-pointer',
               className
             )}
             onClick={handleCopy}
           >
-            {copied ? (
-              <ClipboardDocumentCheckIcon className="w-5 h-5" />
-            ) : (
-              <ClipboardDocumentIcon className="w-5 h-5" />
-            )}
+            {copied ? <CopyCheckIcon className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
           </button>
         </Tooltip.Trigger>
 
         <Tooltip.Portal>
           <Tooltip.Content
             sideOffset={4}
-            className={cls('text-sm px-2 py-1', 'border border-border rounded', 'bg-background')}
+            side="top"
+            className={cls(
+              'text-xs px-2 py-1',
+              'border border-border rounded shadow',
+              'bg-background'
+            )}
           >
             {copied ? '已复制' : '复制'}
           </Tooltip.Content>
