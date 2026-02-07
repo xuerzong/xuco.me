@@ -3,9 +3,8 @@
 import { type PropsWithChildren } from 'react'
 
 import { ThemeProvider as NextThemeProvider } from 'next-themes'
-import { type ThemeProviderProps } from 'next-themes/dist/types'
 
-const themeProviderProps: ThemeProviderProps = {
+const themeProviderProps = {
   attribute: 'class',
   defaultTheme: 'system',
   storageKey: 'xuerzong-com-theme',
