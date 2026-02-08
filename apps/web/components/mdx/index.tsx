@@ -18,7 +18,7 @@ const mdxComponents = {
   th: Table.Th,
   td: Table.Td,
   li: ({ className = '', ...restProps }) => (
-    <li className={`list-disc list-inside pl-4 text-sm mb-4 ${className}`} {...restProps} />
+    <li className={`list-disc list-inside pl-4 mb-4 ${className}`} {...restProps} />
   ),
   ul: ({ className = '', ...restProps }) => (
     <ul className={`list-disc list-inside space-y-2 mb-4 ${className}`} {...restProps} />

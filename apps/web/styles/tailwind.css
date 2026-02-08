@@ -58,8 +58,8 @@
     @apply text-sm;
   }
 
-  .mdx p code {
-    @apply font-mono bg-primary/10 text-primary text-xs px-2 rounded;
+  .mdx code:not(pre code) {
+    @apply font-mono bg-primary/10 text-primary text-xs px-1 rounded;
   }
 
   .mdx pre {
