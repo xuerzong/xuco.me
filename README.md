@@ -8,7 +8,6 @@
 - [Typescript](https://www.typescriptlang.org/)
 - [Tailwindcss](https://tailwindcss.com/)
 - [RadixUI](https://www.radix-ui.com/)
-- [Motion](https://motion.dev/docs/react)
 - [MDX](https://mdxjs.com/)
 
 ## How to use
@@ -18,7 +17,7 @@
 ```bash
 git clone https://github.com/xuerzong/xuco.me
 
-cd xuerzong.com
+cd xuco.me
 
 yarn install
 

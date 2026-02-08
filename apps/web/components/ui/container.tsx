@@ -7,9 +7,7 @@ interface Props {
 
 export const Container = forwardRef<HTMLDivElement, PropsWithChildren<Props>>(
   ({ className, ...restProps }, ref) => {
-    return (
-      <div ref={ref} className={cn('max-w-screen-lg mx-auto px-4', className)} {...restProps} />
-    )
+    return <div ref={ref} className={cn('max-w-5xl mx-auto px-4', className)} {...restProps} />
   }
 )
 
