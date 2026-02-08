@@ -2,6 +2,7 @@ import Table from './table'
 import Image from 'next/image'
 import { Link } from './link'
 import Pre from './pre'
+import { Tag } from './tag'
 
 type MDXComponents = any
 
@@ -23,6 +24,7 @@ const mdxComponents = {
   ul: ({ className = '', ...restProps }) => (
     <ul className={`list-disc list-inside space-y-2 mb-4 ${className}`} {...restProps} />
   ),
+  Tag,
 } as MDXComponents
 
 export default mdxComponents
