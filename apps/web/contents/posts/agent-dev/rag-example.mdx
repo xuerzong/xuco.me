@@ -1,0 +1,228 @@
+---
+title: 使用 Next.js 和 AI SDK 创建 「知识库」
+description: 使用 Next.js 和 AI SDK 创建一个知识库
+---
+
+这一期我们在上一期的基础上拓展，可以先看一下 [快速创建一个 AI Chat 聊天应用](/p/agent-dev/started)。
+
+知识库的原理相对来说比较简单，如下图：
+
+## 开始
+
+我们使用的技术栈是：
+
+- [libSQL](https://docs.turso.tech/libsql) - 向量数据库
+- [Drizzle ORM](https://orm.drizzle.team/) - ORM 方便操作数据库，避免写太多的原生 SQL
+
+### 安装依赖
+
+```bash
+npm install drizzle-orm @libsql/client nanoid
+npm install drizzle-kit -D
+```
+
+- `drizzle-orm` drizzle 的客户端
+- `@libsql/client` libsql 的客户段
+- `nanoid` 生成数据库的唯一ID
+- `drizzle-kit` drizzle 的脚手架
+
+### 创建数据库
+
+简易的知识库数据库设计不需要太复杂，只需要两个库：
+
+- **resource - 资源表：** 存储文档元数据与全文内容。作为知识主表，记录文档的原始上下文（如标题、全文），并为分块数据提供唯一标识关联。
+- **embeddings - 向量表：** 存储从文档中拆解出的语义分块及其 Embedding 向量，负责通过向量空间计算实现快速、精准的“模糊匹配”。
+
+在 `lib/db/schema.ts` 中定义数据库结构
+
+```typescript
+import { sql } from 'drizzle-orm'
+import { sqliteTable, text, blob, integer } from 'drizzle-orm/sqlite-core'
+import { nanoid } from 'nanoid'
+
+export const resources = sqliteTable('resources', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  title: text('title'),
+  content: text('content').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+})
+
+export const embeddings = sqliteTable('embeddings', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  resourceId: text('resource_id').references(() => resources.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  embedding: blob('embedding', { mode: 'buffer' }).notNull(),
+})
+```
+
+在 `lib/db/client.ts` 中初始化 drizzle 客户端
+
+```typescript
+import { drizzle } from 'drizzle-orm/libsql'
+import { createClient } from '@libsql/client'
+import * as dbSchema from './schema'
+
+const client = createClient({
+  url: 'file:local.db',
+})
+
+const db = drizzle(client, { schema: dbSchema })
+
+export default db
+```
+
+初始化 `drizzle.config.ts`
+
+```typescript
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  schema: './lib/db/schema.ts',
+  out: './drizzle',
+  dialect: 'sqlite',
+  dbCredentials: {
+    url: 'file:local.db',
+  },
+})
+```
+
+完成之后，我们需要运行命令生成 SQL 并初始化数据库 `local.db`。
+
+```bash
+npx drizzle-kit generate --name=init
+npx drizzle-kit push
+```
+
+运行完命令之后，我们可以看到项目的根目录有一个名为 `local.db` 的文件，推荐安装 VS Code 的 [SQLite Viewer](https://marketplace.visualstudio.com/items?itemName=qwtel.sqlite-viewer) 插件 - 可以直接点击 `local.db` 来查看数据库中储存的内容。
+
+### 解析向量
+
+我们这里直接使用 openai 的 `text-embedding-3-small` 得大模型进行向量解析。
+
+```typescript
+import { embed, embedMany } from 'ai'
+import * as dbSchema from 'lib/db/schema'
+import db from './client'
+import { asc, desc, eq, sql } from 'drizzle-orm'
+import { aiproxy } from '../models/aiproxy'
+
+export const queryDocumentContext = async (prompt: string) => {
+  const conceptCount = 3
+
+  const { embedding: queryEmbedding } = await embed({
+    model: aiproxy.embeddingModel('text-embedding-3-small'),
+    value: prompt,
+  })
+
+  const queryBuffer = Buffer.from(new Float32Array(queryEmbedding).buffer)
+
+  const rs = await db
+    .select({
+      content: dbSchema.embeddings.content,
+      // 如果需要查看相似度分数，可以取消下面这一行的注释
+      // distance: sql<number>`vector_distance_cos(${embeddings.embedding}, vector32(${queryBuffer}))`
+    })
+    .from(dbSchema.embeddings)
+    .orderBy(
+      asc(sql`vector_distance_cos(${dbSchema.embeddings.embedding}, vector32(${queryBuffer}))`)
+    )
+    .limit(conceptCount)
+
+  return rs.map((row) => row.content).join('\n')
+}
+
+export const createResourceWithEmbeddings = async (
+  content: string,
+  chunks: string[],
+  title?: string
+) => {
+  const [resource] = await db
+    .insert(dbSchema.resources)
+    .values({
+      content: content,
+      title: title || undefined,
+    })
+    .returning()
+
+  const { embeddings: vectors } = await embedMany({
+    model: aiproxy.embeddingModel('text-embedding-3-small'),
+    values: chunks,
+  })
+
+  const embeddingValues = chunks.map((chunk, i) => ({
+    resourceId: resource.id,
+    content: chunk,
+    embedding: Buffer.from(new Float32Array(vectors[i]).buffer),
+  }))
+
+  await db.insert(dbSchema.embeddings).values(embeddingValues)
+}
+```
+
+### 更新接口
+
+在 `/api/chat/route.ts` 接口中新增核心逻辑：
+
+- 首先将用户输入的 Prompt 进行向量化处理;
+- 随后通过向量数据库检索与该向量高度相关的知识片段;
+- 最终将这些检索到的知识片段整合到发送给大模型的上下文信息中，以此提升大模型回答的 **精准度和相关性**。
+
+```typescript
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { convertToModelMessages, streamText, UIMessage } from 'ai'
+import { aiproxy } from 'lib/models/aiproxy'
+import { queryDocumentContext } from 'lib/db/embeddings'
+
+export const maxDuration = 30
+
+// 创建模型示例 - 移动至 lib/models/aiproxy
+export const aiproxy = createOpenAICompatible({
+  baseURL: 'https://api.aiproxy.shop/v1',
+  apiKey: process.env.AIPROXY_API_KEY!,
+  name: 'aiproxy',
+})
+
+export async function POST(req: Request) {
+  const { messages }: { messages: UIMessage[] } = await req.json()
+
+  const modelMessages = await convertToModelMessages(messages)
+
+  const lastMessage = modelMessages[modelMessages.length - 1]
+  const lastUserQuery = lastMessage.content
+  let systemPrompt = '你是一个有用的助手\n'
+  if (Array.isArray(lastUserQuery) && lastUserQuery[0].type === 'text') {
+    const context = await queryDocumentContext(lastUserQuery[0].text)
+    systemPrompt += `你是一个智能助手。请根据以下提供的【上下文知识】来回答用户的问题。如果知识库中没有相关信息，请诚实告知，不要胡编乱造。\n【上下文知识】：\n`
+    systemPrompt + = context
+  }
+
+  const result = streamText({
+    model: aiproxy('gemini-3-flash'),
+    system: systemPrompt,
+    messages: modelMessages,
+  })
+
+  return result.toUIMessageStreamResponse()
+}
+```
+
+ok, 我们的主要逻辑都完成了，现在往数据库中push你的文档内容
+
+```typescript
+const content = ''
+```
+
+## 完成
+
+```bash
+npm run dev
+```
+
+复杂的应用是一个个小的应用组合起来的，学会每个小的知识点，就能够构建非常牛x的大型项目。
+
+下期为大家打来，如何封装 Agent，让 Agent 自助查询知识库，而非开发者强制关联上下文。
