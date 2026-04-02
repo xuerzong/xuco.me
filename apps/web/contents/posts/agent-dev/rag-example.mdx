@@ -1,228 +1,298 @@
 ---
-title: 使用 Next.js 和 AI SDK 创建 「知识库」
-description: 使用 Next.js 和 AI SDK 创建一个知识库
+title: 使用 AI SDK 创建 「知识库」
+description: 使用 AI SDK 创建一个知识库
 ---
 
-这一期我们在上一期的基础上拓展，可以先看一下 [快速创建一个 AI Chat 聊天应用](/p/agent-dev/started)。
 
-知识库的原理相对来说比较简单，如下图：
+![知识库（RAG）](/images/rag-example/rag-workflow.png) 
+
+今天分享一个用纯 Node.js 实现知识库（RAG）的最简方案。
+
+RAG 的核心思路其实并不复杂：
+
+- 对文档进行内容分割，将文档拆解成一个个小的语义分块（chunk）；
+- 将这些分块通过大模型解析成向量（embedding）并储存在向量数据库中；
+- 当用户输入一个查询时，同样将查询进行向量化处理，通过向量数据库检索高度相关的知识片段；
+- 最后将这些片段整合到发送给大模型的上下文中，提升回答的精准度和相关性。
+
 
 ## 开始
 
-我们使用的技术栈是：
+技术栈：
 
 - [libSQL](https://docs.turso.tech/libsql) - 向量数据库
-- [Drizzle ORM](https://orm.drizzle.team/) - ORM 方便操作数据库，避免写太多的原生 SQL
+- [AI SDK](https://ai-sdk.dev/) - 大模型调用与向量解析
 
 ### 安装依赖
 
 ```bash
-npm install drizzle-orm @libsql/client nanoid
-npm install drizzle-kit -D
+npm install @libsql/client @ai-sdk/openai-compatible ai dotenv
 ```
 
-- `drizzle-orm` drizzle 的客户端
-- `@libsql/client` libsql 的客户段
-- `nanoid` 生成数据库的唯一ID
-- `drizzle-kit` drizzle 的脚手架
+### 添加环境变量
 
-### 创建数据库
-
-简易的知识库数据库设计不需要太复杂，只需要两个库：
-
-- **resource - 资源表：** 存储文档元数据与全文内容。作为知识主表，记录文档的原始上下文（如标题、全文），并为分块数据提供唯一标识关联。
-- **embeddings - 向量表：** 存储从文档中拆解出的语义分块及其 Embedding 向量，负责通过向量空间计算实现快速、精准的“模糊匹配”。
-
-在 `lib/db/schema.ts` 中定义数据库结构
-
-```typescript
-import { sql } from 'drizzle-orm'
-import { sqliteTable, text, blob, integer } from 'drizzle-orm/sqlite-core'
-import { nanoid } from 'nanoid'
-
-export const resources = sqliteTable('resources', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => nanoid()),
-  title: text('title'),
-  content: text('content').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
-})
-
-export const embeddings = sqliteTable('embeddings', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => nanoid()),
-  resourceId: text('resource_id').references(() => resources.id, { onDelete: 'cascade' }),
-  content: text('content').notNull(),
-  embedding: blob('embedding', { mode: 'buffer' }).notNull(),
-})
-```
-
-在 `lib/db/client.ts` 中初始化 drizzle 客户端
-
-```typescript
-import { drizzle } from 'drizzle-orm/libsql'
-import { createClient } from '@libsql/client'
-import * as dbSchema from './schema'
-
-const client = createClient({
-  url: 'file:local.db',
-})
-
-const db = drizzle(client, { schema: dbSchema })
-
-export default db
-```
-
-初始化 `drizzle.config.ts`
-
-```typescript
-import { defineConfig } from 'drizzle-kit'
-
-export default defineConfig({
-  schema: './lib/db/schema.ts',
-  out: './drizzle',
-  dialect: 'sqlite',
-  dbCredentials: {
-    url: 'file:local.db',
-  },
-})
-```
-
-完成之后，我们需要运行命令生成 SQL 并初始化数据库 `local.db`。
+先在项目根目录创建 `.env`：
 
 ```bash
-npx drizzle-kit generate --name=init
-npx drizzle-kit push
+AIPROXY_API_KEY=your_api_key_here
 ```
 
-运行完命令之后，我们可以看到项目的根目录有一个名为 `local.db` 的文件，推荐安装 VS Code 的 [SQLite Viewer](https://marketplace.visualstudio.com/items?itemName=qwtel.sqlite-viewer) 插件 - 可以直接点击 `local.db` 来查看数据库中储存的内容。
+### 初始化
 
-### 解析向量
-
-我们这里直接使用 openai 的 `text-embedding-3-small` 得大模型进行向量解析。
+先把最基础的依赖准备好，包括模型客户端、本地数据库客户端，以及一组演示知识。
 
 ```typescript
-import { embed, embedMany } from 'ai'
-import * as dbSchema from 'lib/db/schema'
-import db from './client'
-import { asc, desc, eq, sql } from 'drizzle-orm'
-import { aiproxy } from '../models/aiproxy'
-
-export const queryDocumentContext = async (prompt: string) => {
-  const conceptCount = 3
-
-  const { embedding: queryEmbedding } = await embed({
-    model: aiproxy.embeddingModel('text-embedding-3-small'),
-    value: prompt,
-  })
-
-  const queryBuffer = Buffer.from(new Float32Array(queryEmbedding).buffer)
-
-  const rs = await db
-    .select({
-      content: dbSchema.embeddings.content,
-      // 如果需要查看相似度分数，可以取消下面这一行的注释
-      // distance: sql<number>`vector_distance_cos(${embeddings.embedding}, vector32(${queryBuffer}))`
-    })
-    .from(dbSchema.embeddings)
-    .orderBy(
-      asc(sql`vector_distance_cos(${dbSchema.embeddings.embedding}, vector32(${queryBuffer}))`)
-    )
-    .limit(conceptCount)
-
-  return rs.map((row) => row.content).join('\n')
-}
-
-export const createResourceWithEmbeddings = async (
-  content: string,
-  chunks: string[],
-  title?: string
-) => {
-  const [resource] = await db
-    .insert(dbSchema.resources)
-    .values({
-      content: content,
-      title: title || undefined,
-    })
-    .returning()
-
-  const { embeddings: vectors } = await embedMany({
-    model: aiproxy.embeddingModel('text-embedding-3-small'),
-    values: chunks,
-  })
-
-  const embeddingValues = chunks.map((chunk, i) => ({
-    resourceId: resource.id,
-    content: chunk,
-    embedding: Buffer.from(new Float32Array(vectors[i]).buffer),
-  }))
-
-  await db.insert(dbSchema.embeddings).values(embeddingValues)
-}
-```
-
-### 更新接口
-
-在 `/api/chat/route.ts` 接口中新增核心逻辑：
-
-- 首先将用户输入的 Prompt 进行向量化处理;
-- 随后通过向量数据库检索与该向量高度相关的知识片段;
-- 最终将这些检索到的知识片段整合到发送给大模型的上下文信息中，以此提升大模型回答的 **精准度和相关性**。
-
-```typescript
+import 'dotenv/config'
+import { createClient } from '@libsql/client/sqlite3'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import { convertToModelMessages, streamText, UIMessage } from 'ai'
-import { aiproxy } from 'lib/models/aiproxy'
-import { queryDocumentContext } from 'lib/db/embeddings'
+import { embed, generateText } from 'ai'
 
-export const maxDuration = 30
-
-// 创建模型示例 - 移动至 lib/models/aiproxy
-export const aiproxy = createOpenAICompatible({
+const aiproxy = createOpenAICompatible({
   baseURL: 'https://api.aiproxy.shop/v1',
   apiKey: process.env.AIPROXY_API_KEY!,
   name: 'aiproxy',
 })
 
-export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json()
+const db = createClient({
+  url: 'file:local.db',
+})
 
-  const modelMessages = await convertToModelMessages(messages)
+const knowledgeDocuments = [
+  {
+    title: 'AI SDK 是什么',
+    content:
+      'AI SDK 是一个帮助 TS 和 JS 开发者快速接入大模型的工具包，支持流式响应、工具调用和多模型适配。',
+  },
+  {
+    title: 'RAG 的核心流程',
+    content:
+      'RAG 的核心流程是切分文档、生成向量、保存向量、查询时把问题也转成向量、最后检索最相近的内容作为上下文。',
+  },
+  {
+    title: '为什么要做分块',
+    content:
+      '因为整篇文档太长会影响检索精度，所以通常要先按语义切成多个 chunk，再分别生成 embedding。',
+  },
+]
 
-  const lastMessage = modelMessages[modelMessages.length - 1]
-  const lastUserQuery = lastMessage.content
-  let systemPrompt = '你是一个有用的助手\n'
-  if (Array.isArray(lastUserQuery) && lastUserQuery[0].type === 'text') {
-    const context = await queryDocumentContext(lastUserQuery[0].text)
-    systemPrompt += `你是一个智能助手。请根据以下提供的【上下文知识】来回答用户的问题。如果知识库中没有相关信息，请诚实告知，不要胡编乱造。\n【上下文知识】：\n`
-    systemPrompt + = context
-  }
-
-  const result = streamText({
-    model: aiproxy('gemini-3-flash'),
-    system: systemPrompt,
-    messages: modelMessages,
-  })
-
-  return result.toUIMessageStreamResponse()
+type StoredChunk = {
+  id: number
+  title: string
+  content: string
+  distance: number
 }
 ```
 
-ok, 我们的主要逻辑都完成了，现在往数据库中push你的文档内容
+### 文档分块
+
+RAG 不会直接拿整篇文档做检索，而是将文档拆分成很多小的文本块。
 
 ```typescript
-const content = ''
+const splitIntoChunks = (text: string, size = 200) => {
+  const normalized = text.replace(/\s+/g, ' ').trim()
+  if (!normalized) {
+    return []
+  }
+
+  const chunks: string[] = []
+  for (let index = 0; index < normalized.length; index += size) {
+    chunks.push(normalized.slice(index, index + size))
+  }
+
+  return chunks
+}
 ```
 
-## 完成
+**如何生成 `chunk` 的内容？**
+
+最简单的办法就是直接按字符切分。比如上面 `size = 200`，就表示每 200 个字符切成一个块。或者可以通过标点符号进行切分，也可以用一些第三方库来进行智能分割。
+
+### 生成 Embedding
+
+这里会在两个阶段使用 embedding：
+
+1. 入库时把每个 chunk 转成向量并存储。
+2. 查询时把用户问题也转成向量，用于检索最相关的上下文。
+
+```typescript
+const createEmbedding = async (value: string) => {
+  const result = await embed({
+    model: aiproxy.embeddingModel('openai/text-embedding-3-small'),
+    value,
+  })
+
+  return result.embedding
+}
+```
+
+### 初始化知识库表
+
+现在要把知识片段真正保存到本地数据库中。
+
+```typescript
+const initializeDatabase = async () => {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS documents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      embedding BLOB NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+}
+```
+
+这里的设计也比较直接：
+
+1. `documents` 表存标题、文本内容和 embedding。
+2. embedding 用 `BLOB` 存储，方便直接使用 libSQL 的向量函数检索。
+
+这不是最终架构里性能最高的方案，但它非常利于你先理解“存储 + 检索”的闭环。
+
+### 知识库入库
+
+有了表结构之后，我们还需要把知识内容写入数据库。
+
+```typescript
+const seedKnowledgeBase = async () => {
+  await initializeDatabase()
+
+  const countResult = await db.execute('SELECT COUNT(*) AS count FROM documents')
+  const count = Number(countResult.rows[0]?.count ?? 0)
+
+  if (count > 0) {
+    return
+  }
+
+  for (const document of knowledgeDocuments) {
+    const chunks = splitIntoChunks(document.content)
+
+    for (const chunk of chunks) {
+      const embedding = await createEmbedding(chunk)
+      const embeddingBuffer = Buffer.from(new Float32Array(embedding).buffer)
+
+      await db.execute({
+        sql: 'INSERT INTO documents (title, content, embedding) VALUES (?, ?, ?)',
+        args: [document.title, chunk, embeddingBuffer],
+      })
+    }
+  }
+}
+```
+
+入库流程如下：
+
+1. 如果表里已经有数据，就不重复写入；
+2. 把每篇文档切成多个 chunk；
+3. 给每个 chunk 生成 embedding；
+4. 把 chunk 和向量一起存进数据库。
+
+### 检索相关片段
+
+当用户提问时，我们先把问题转成向量，然后直接在数据库里做 Top-K 检索。
+
+```typescript
+const searchKnowledge = async (query: string, limit = 3) => {
+  const userQueryEmbedded = await createEmbedding(query)
+  const queryBuffer = Buffer.from(new Float32Array(userQueryEmbedded).buffer)
+
+  const rs = await db.execute({
+    sql: `
+      SELECT
+        id,
+        title,
+        content,
+        vector_distance_cos(embedding, vector32(?)) AS distance
+      FROM documents
+      ORDER BY distance ASC
+      LIMIT ?
+    `,
+    args: [queryBuffer, limit],
+  })
+
+  return rs.rows.map((row) => ({
+    id: Number(row.id),
+    title: String(row.title),
+    content: String(row.content),
+    distance: Number(row.distance),
+  }))
+}
+```
+
+查询流程如下：
+
+1. 先把用户问题转成 embedding。
+2. 用 `vector32(?)` 把查询向量传给数据库。
+3. 数据库内部用 `vector_distance_cos` 计算距离并排序，拿到 Top-K 结果。
+
+### 封装主函数
+
+最后，把上面所有逻辑串起来。
+
+```typescript
+export const chatWithKnowledge = async (question: string) => {
+  await seedKnowledgeBase()
+
+  const results = await searchKnowledge(question)
+  const contextText = results.map((item) => `- ${item.title}: ${item.content}`).join('\n')
+
+  const result = await generateText({
+    model: aiproxy('deepseek/deepseek-chat'), 
+    system: `你是一个有用的助手。请优先根据知识库内容回答问题；如果知识库里没有相关信息，就明确告诉用户你不知道。\n\n知识库上下文：\n${contextText}`,
+    prompt: question,
+  })
+
+  return {
+    answer: result.text,
+    references: results,
+  }
+}
+```
+
+整个请求链路到这里就闭环了：
+
+1. 函数执行时，先确保知识库已经初始化；
+2. 把用户问题转成向量；
+3. 在数据库层执行向量检索，拿到最相关片段；
+4. 把这些片段加入 `system prompt`，作为上下文或者参考信息；
+5. 调用主模型生成最终回答；
+6. 返回最终答案和命中的参考片段。
+
+把上面所有代码拼到一起，就是一个完整的单文件 RAG Demo。
+
+在文件末尾加上入口调用，直接运行即可：
+
+```typescript
+const result = await chatWithKnowledge('RAG 为什么要分块？')
+
+console.log('回答：', result.answer)
+console.log('参考片段：', result.references)
+```
+
+### 知识库文档处理
+
+在上面的示例里，我直接在代码里写了一个 `knowledgeDocuments` 数组来模拟知识库内容：
+
+```typescript
+const knowledgeDocuments = [
+  {
+    title: '你的第一篇文档',
+    content: '这里放你自己的知识内容',
+  },
+]
+```
+
+如果你的内容来自 Markdown、数据库或者 CMS，也可以先把内容读出来，再复用同样的 `splitIntoChunks -> createEmbedding -> insert` 流程。如果你的文档是 PDF 或图片，也可以先用 OCR 或者 [pdf.js](https://mozilla.github.io/pdf.js/) 把它们转成文本，再进行后续处理。
+
+## 运行
 
 ```bash
-npm run dev
+npx tsx rag.ts
 ```
+
+## 结语
 
 复杂的应用是一个个小的应用组合起来的，学会每个小的知识点，就能够构建非常牛x的大型项目。
 
-下期为大家打来，如何封装 Agent，让 Agent 自助查询知识库，而非开发者强制关联上下文。
+大家可以看一下我实现的 知识库的 NPM CLI 工具 - [Meow](https://github.com/xuerzong/meow) ，欢迎 star 🌟。
