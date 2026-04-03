@@ -47,7 +47,7 @@ const Page = async ({ params }: Props) => {
     return notFound()
   }
 
-  return <Container className="mdx max-w-3xl pb-20">{content.content}</Container>
+  return <Container className="mdx max-w-2xl pb-20">{content.content}</Container>
 }
 
 export default Page
