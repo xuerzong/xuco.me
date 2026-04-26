@@ -11,13 +11,24 @@ interface Props {
   params: Promise<Params>
 }
 
+const getOgImagePath = (slug: string[]) => {
+  return `/og/post/${slug.join('/')}`
+}
+
 export const generateMetadata = async ({ params }: Props) => {
   const { slug = [] } = await params
   const frontmatter = await getFrontmatter('posts', slug.join('/'))
+  const imagePath = getOgImagePath(slug)
   return {
     ...frontmatter,
-    openGraph: { ...frontmatter },
-    twitter: { ...frontmatter },
+    openGraph: {
+      ...frontmatter,
+      images: [{ url: imagePath }],
+    },
+    twitter: {
+      ...frontmatter,
+      images: [imagePath],
+    },
   } as Metadata
 }
 

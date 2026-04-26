@@ -15,9 +15,14 @@ const getFilePath = (slug: string[] | undefined) => {
   return !slug || slug.length === 0 ? 'index' : slug.join('/')
 }
 
+const getOgImagePath = (slug: string[] | undefined) => {
+  return `/og/${getFilePath(slug)}`
+}
+
 export const generateMetadata = async ({ params }: Props) => {
   const { slug } = await params
   const filePath = getFilePath(slug)
+  const imagePath = getOgImagePath(slug)
 
   const frontmatter = await getFrontmatter('pages', filePath)
 
@@ -25,16 +30,25 @@ export const generateMetadata = async ({ params }: Props) => {
 
   return {
     ...frontmatter,
-    openGraph: { ...frontmatter },
-    twitter: { ...frontmatter },
+    openGraph: {
+      ...frontmatter,
+      images: [{ url: imagePath }],
+    },
+    twitter: {
+      ...frontmatter,
+      images: [imagePath],
+    },
   } as Metadata
 }
 
 export const generateStaticParams = async () => {
   const pages = await getAllContents('pages')
-  return pages.map((slug) => ({
-    slug: slug[slug.length - 1] === 'index' ? slug.slice(0, -1) : slug,
-  }))
+  return [
+    { slug: [] as string[] },
+    ...pages.map((slug) => ({
+      slug: slug[slug.length - 1] === 'index' ? slug.slice(0, -1) : slug,
+    })),
+  ]
 }
 
 const Page = async ({ params }: Props) => {
