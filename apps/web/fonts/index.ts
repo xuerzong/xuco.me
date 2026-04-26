@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Roboto } from 'next/font/google'
 
 const GeistFont = Geist({
   subsets: ['latin'],
@@ -11,6 +11,11 @@ const GeistMonoFont = Geist_Mono({
   variable: '--font-mono',
 })
 
-const fonts = { GeistMonoFont, GeistFont }
+const RobotoFont = Roboto({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+})
+
+const fonts = { GeistMonoFont, GeistFont, RobotoFont }
 
 export default fonts

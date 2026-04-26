@@ -1,25 +1,5 @@
 @import 'tailwindcss';
 
-:root {
-  --primary: var(--color-zinc-950);
-  --primary-foreground: var(--color-zinc-100);
-
-  --background: var(--color-zinc-50);
-  --foreground: var(--color-zinc-900);
-
-  --border: var(--color-zinc-200);
-}
-
-:root.dark {
-  --primary: var(--color-zinc-100);
-  --primary-foreground: var(--color-zinc-950);
-
-  --background: var(--color-zinc-900);
-  --foreground: var(--color-zinc-50);
-
-  --border: var(--color-zinc-700);
-}
-
 @theme {
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -28,28 +8,6 @@
   --color-foreground: var(--foreground);
 
   --color-border: var(--border);
-}
-
-@theme inline {
-  --animate-marquee: marquee var(--duration) infinite linear;
-  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
-}
-
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(calc(-100% - var(--gap)));
-  }
-}
-@keyframes marquee-vertical {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(calc(-100% - var(--gap)));
-  }
 }
 
 @layer base {

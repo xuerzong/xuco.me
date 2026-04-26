@@ -1,51 +1,5 @@
 @import url('./tailwind.css');
 
-:root {
-  /* background color */
-  --prism-color-background: oklch(98.4% 0.003 247.858);
-
-  /* base color */
-  --prism-color-base-primary: oklch(37.2% 0.044 257.287);
-  --prism-color-base-secondary: oklch(55.4% 0.046 257.417);
-
-  /* tokens color */
-  --prism-color-function: oklch(49.6% 0.265 301.924);
-  --prism-color-keyword: oklch(50.5% 0.213 27.518);
-  --prism-color-number: oklch(54.1% 0.281 293.009);
-  --prism-color-string: oklch(54.6% 0.245 262.881);
-  --prism-color-tag: oklch(52.7% 0.154 150.069);
-  --prism-color-parameter: oklch(55.3% 0.195 38.402);
-  --prism-color-property-access: oklch(48.8% 0.243 264.376);
-
-  /* tokens color, from base */
-  --prism-color-comment: var(--prism-color-base-secondary);
-  --prism-color-property: var(--prism-color-base-primary);
-  --prism-color-punctuation: var(--prism-color-base-secondary);
-}
-
-.dark {
-  /* background color */
-  --prism-color-background: #161e31;
-
-  /* base color */
-  --prism-color-base-primary: oklch(86.9% 0.022 252.894);
-  --prism-color-base-secondary: oklch(70.4% 0.04 256.788);
-
-  /* tokens color */
-  --prism-color-function: oklch(71.4% 0.203 305.504);
-  --prism-color-keyword: oklch(70.4% 0.191 22.216);
-  --prism-color-number: oklch(81.1% 0.111 293.571);
-  --prism-color-string: oklch(80.9% 0.105 251.813);
-  --prism-color-tag: oklch(79.2% 0.209 151.711);
-  --prism-color-parameter: oklch(75% 0.183 55.934);
-  --prism-color-property-access: oklch(70.7% 0.165 254.624);
-
-  /* tokens color, from base */
-  --prism-color-comment: var(--prism-color-base-secondary);
-  --prism-color-property: var(--prism-color-base-primary);
-  --prism-color-punctuation: var(--prism-color-base-secondary);
-}
-
 /**
  * Base
  */
@@ -53,6 +7,10 @@ pre > code,
 [class*='language-*'] {
   .code-line {
     @apply text-[var(--prism-color-base-primary)];
+
+    &.highlight-line {
+      background-color: var(--prism-color-highlight);
+    }
   }
 
   .token {
@@ -95,6 +53,7 @@ pre > code,
       @apply text-[var(--prism-color-comment)];
     }
 
+    &.boolean,
     &.rule,
     &.keyword {
       @apply text-[var(--prism-color-keyword)];
@@ -109,12 +68,12 @@ pre > code,
 .language-js,
 .language-javascript {
   .code-line {
-    @apply text-[var(--prism-color-property-access)];
+    @apply text-[var(--prism-color-base-primary)];
   }
 
   .token {
     .property-access {
-      @apply text-[var(--prism-color-string)];
+      @apply text-[var(--prism-color-property-access)];
     }
   }
 
@@ -128,7 +87,7 @@ pre > code,
 .language-ts,
 .language-typescript {
   .code-line {
-    @apply text-[var(--prism-color-property-access)];
+    @apply text-[var(--prism-color-base-primary)];
   }
 
   &.script {
@@ -142,6 +101,10 @@ pre > code,
   @apply text-[var(--prism-color-base-primary)];
 
   .token {
+    &.function {
+      @apply text-[var(--prism-color-base-primary)];
+    }
+
     &.parameter {
       @apply text-[var(--prism-color-base-primary)];
     }

@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Link } from './link'
 import Pre from './pre'
 import { Tag } from './tag'
+import LogoASCII from './logo-ascii'
 
 type MDXComponents = any
 
@@ -25,6 +26,7 @@ const mdxComponents = {
     <ul className={`list-disc list-inside space-y-2 mb-4 ${className}`} {...restProps} />
   ),
   Tag,
+  LogoASCII,
 } as MDXComponents
 
 export default mdxComponents

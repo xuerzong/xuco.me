@@ -8,15 +8,20 @@ type ContentType = 'pages' | 'posts'
 
 const contentDir = path.resolve(process.cwd(), 'contents')
 
+const isMissingContentError = (error: unknown) => {
+  return error instanceof Error && 'code' in error && error.code === 'ENOENT'
+}
+
 const readFileContent = (type: ContentType, slug: string) => {
-  return new Promise<string>((resolve, reject) => {
-    const filePath = path.resolve(contentDir, type, `${slug}.mdx`)
-    if (!fs.existsSync(filePath)) {
-      reject(new Error('File not found'))
-    }
-    const source = fs.readFileSync(filePath, 'utf-8')
-    resolve(source)
-  })
+  const filePath = path.resolve(contentDir, type, `${slug}.mdx`)
+
+  if (!fs.existsSync(filePath)) {
+    const error = new Error(`Content file not found: ${type}/${slug}.mdx`)
+    Object.assign(error, { code: 'ENOENT' })
+    throw error
+  }
+
+  return fs.readFileSync(filePath, 'utf-8')
 }
 
 export const getAllContents = async (type: ContentType) => {
@@ -57,18 +62,20 @@ export const getContent = async (
   slug: string
 ): Promise<ContentResult> => {
   try {
-    const content = await readFileContent(type, slug)
+    const content = readFileContent(type, slug)
     const markdownContent = await mdx(content, mdxComponents)
     return { success: true, content: markdownContent }
   } catch (error) {
-    console.log(error)
+    if (!isMissingContentError(error)) {
+      console.error(error)
+    }
     return { success: false }
   }
 }
 
 export const getFrontmatter = async (type: ContentType = 'pages', slug: string) => {
   try {
-    const content = await readFileContent(type, slug)
+    const content = readFileContent(type, slug)
     return frontmatter(content)
   } catch (error) {
     return {} as Frontmatter

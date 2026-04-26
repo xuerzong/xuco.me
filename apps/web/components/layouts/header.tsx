@@ -5,8 +5,6 @@ import cls from 'classnames'
 
 import Container from 'components/ui/container'
 import CONFIG from 'constants/config'
-import { ThemeButton } from '../ui/theme-button'
-import { ClientOnly } from '../client-only'
 
 export const Header = () => {
   return (
@@ -20,12 +18,6 @@ export const Header = () => {
         <NextLink href="/">
           <h1 className="font-bold w-32 uppercase">{CONFIG.WEB_AUTHOR}</h1>
         </NextLink>
-
-        <ClientOnly>
-          <div className="md:w-32 text-right ml-auto">
-            <ThemeButton />
-          </div>
-        </ClientOnly>
       </Container>
     </header>
   )

@@ -43,7 +43,7 @@ const CopyButton: React.FC<CopyBtnProps> = ({ className, onClick }) => {
             type="button"
             className={cls(
               'flex items-center justify-center',
-              'w-6 h-6 transition-colors border rounded',
+              'w-6 h-6 transition-colors rounded',
               'border border-border rounded',
               'bg-background cursor-pointer',
               className
@@ -80,7 +80,13 @@ const Pre: React.FC<PropsWithChildren> = ({ children }) => {
   }
 
   return (
-    <div ref={preRef} className={cls('relative my-4', 'border border-border rounded')}>
+    <div
+      ref={preRef}
+      className={cls(
+        'relative my-4',
+        'border border-(--prism-color-border) bg-(--prism-color-background) rounded'
+      )}
+    >
       <CopyButton onClick={handleCopy} className="absolute top-2 right-2" />
       <pre className="m-0 p-4 text-sm">{children}</pre>
     </div>

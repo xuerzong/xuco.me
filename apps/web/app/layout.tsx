@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import ThemeProvider from 'libs/providers/theme'
-import fonts from 'fonts'
 import CONFIG from 'constants/config'
 import 'styles/index.css'
 import Script from 'next/script'
 import { Header } from 'components/layouts/header'
 import { Footer } from 'components/layouts/footer'
+import fonts from 'fonts'
+import { themeCssVariables } from 'constants/theme'
 
 export const metadata: Metadata = {
   metadataBase: new URL(CONFIG.SITE_URL),
@@ -44,17 +44,17 @@ interface LayoutProps {
 
 const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = async ({ children }) => {
   return (
-    <html lang="en-US" className={fonts.GeistFont.className} suppressHydrationWarning>
-      <body className={`${fonts.GeistMonoFont.variable} bg-background text-foreground`}>
+    <html lang="en-US" style={themeCssVariables} suppressHydrationWarning>
+      <body
+        className={`${fonts.GeistMonoFont.className} ${fonts.GeistMonoFont.variable} bg-background text-foreground`}
+      >
         <Script
           src="https://umami.xuco.me/script.js"
           data-website-id="59860341-b1d7-416c-869d-81daceda703e"
         />
-        <ThemeProvider>
-          <Header />
-          <main className="pt-12">{children}</main>
-          <Footer />
-        </ThemeProvider>
+        <Header />
+        <main className="pt-12">{children}</main>
+        <Footer />
       </body>
     </html>
   )
