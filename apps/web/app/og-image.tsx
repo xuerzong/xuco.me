@@ -65,7 +65,7 @@ export const createOgImage = ({ title, description, eyebrow }: OgImageOptions) =
                 display: 'flex',
                 alignItems: 'center',
                 gap: '14px',
-                fontSize: 24,
+                fontSize: 18,
                 color: theme.accent,
                 textTransform: 'uppercase',
                 letterSpacing: '0.18em',
@@ -82,7 +82,7 @@ export const createOgImage = ({ title, description, eyebrow }: OgImageOptions) =
               />
               <div style={{ display: 'flex' }}>{eyebrow || 'xuco.me'}</div>
             </div>
-            <div style={{ display: 'flex', fontSize: 24, color: theme.accent }}>
+            <div style={{ display: 'flex', fontSize: 18, color: theme.accent }}>
               {CONFIG.WEB_AUTHOR}
             </div>
           </div>
@@ -91,7 +91,7 @@ export const createOgImage = ({ title, description, eyebrow }: OgImageOptions) =
             <div
               style={{
                 display: 'flex',
-                fontSize: 72,
+                fontSize: 64,
                 lineHeight: 1.08,
                 fontWeight: 700,
                 letterSpacing: '-0.04em',
@@ -125,8 +125,9 @@ export const createOgImage = ({ title, description, eyebrow }: OgImageOptions) =
               color: theme.accent,
             }}
           >
-            <div style={{ display: 'flex' }}>{CONFIG.SITE_URL.replace(/^https?:\/\//, '')}</div>
-            <div style={{ display: 'flex', color: theme.success }}>Open Graph Image</div>
+            <div style={{ display: 'flex', color: theme.success }}>
+              {CONFIG.SITE_URL.replace(/^https?:\/\//, '')}
+            </div>
           </div>
         </div>
       </div>
