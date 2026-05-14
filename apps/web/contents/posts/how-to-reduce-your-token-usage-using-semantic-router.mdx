@@ -1,0 +1,330 @@
+---
+title: 如何使用 Semantic Router 减少 Token 使用量
+description: 用 semantic-router 在模型调用前做语义分流，减少无效上下文和误用大模型，从而显著降低 Token 成本。
+---
+
+在大多数 AI 应用里，Token 超支通常不是因为“模型太贵”，而是因为我们把太多不该发给模型的信息都发过去了。
+
+常见浪费场景：
+
+- 每次请求都塞入超长 `system prompt`；
+- 不区分意图，所有问题都走同一个大模型链路；
+- RAG 一律检索 `top_k=10`，即使只是闲聊；
+- 能本地回答的问题，也走远端模型。
+
+这篇文章用 [semantic-router](https://github.com/aurelio-labs/semantic-router) 做一个“前置语义分流层”，把请求先路由，再决定：
+
+1. 要不要调用大模型；
+2. 调哪个链路（闲聊、知识库、高成本推理）；
+3. 该附带多少上下文。
+
+核心目标只有一个：在不明显牺牲效果的前提下，减少每次请求的 **平均 Token 消耗**。
+
+## 什么是 Semantic Router
+
+`semantic-router` 是一个超轻量决策层。它不依赖先生成一段大模型输出再做判断，而是用向量语义匹配做意图分流。
+
+和“先让 LLM 判断该走哪个工具”相比，它的优势是：
+
+- 更快：少一次 LLM 生成；
+- 更省：少一次额外 Token；
+- 更稳：意图边界清晰，可通过样本迭代优化。
+
+官方 Quickstart 的核心对象是三个：
+
+- `Route`：定义一个意图通道（例如 `chitchat`、`kb_qa`）；
+- `Encoder`：把文本编码成向量（如 OpenAI/Cohere/Hugging Face）；
+- `SemanticRouter`：根据输入语义返回最匹配路由。
+
+## 先看最小可运行示例
+
+下面是一个 Python 版最小示例（和官方思路一致），你可以先跑通再接业务链路。
+
+### 安装
+
+```bash
+uv pip install -U semantic-router
+```
+
+如果你使用本地模型路线（可选）：
+
+```bash
+uv pip install -U "semantic-router[local]"
+```
+
+### 代码
+
+```python
+import os
+from semantic_router import Route
+from semantic_router.encoders import OpenAIEncoder
+from semantic_router.routers import SemanticRouter
+
+os.environ["OPENAI_API_KEY"] = "<YOUR_API_KEY>"
+
+chitchat = Route(
+		name="chitchat",
+		utterances=[
+				"今天天气怎么样",
+				"你在干嘛",
+				"聊聊天吧",
+				"周末有什么安排",
+		],
+)
+
+kb_qa = Route(
+		name="kb_qa",
+		utterances=[
+				"帮我查一下退款政策",
+				"文档里怎么配置 webhook",
+				"这个接口的鉴权方式是什么",
+				"请根据知识库回答",
+		],
+)
+
+high_reasoning = Route(
+		name="high_reasoning",
+		utterances=[
+				"请深度对比两套架构方案并给出取舍",
+				"写一个完整的技术方案和风险评估",
+				"做一个多维度决策分析",
+		],
+)
+
+encoder = OpenAIEncoder()
+router = SemanticRouter(
+		encoder=encoder,
+		routes=[chitchat, kb_qa, high_reasoning],
+		auto_sync="local",
+)
+
+def route_query(query: str):
+		result = router(query)
+		return result.name if result else None
+
+for q in [
+		"今天天气怎么样？",
+		"文档里 webhook 怎么配置？",
+		"请给我一份完整架构评审",
+		"我想学习西班牙语",
+]:
+		print(q, "=>", route_query(q))
+```
+
+最后一个样例很可能会得到 `None`（无匹配），这正是我们想要的行为之一：
+未知问题不要强行走昂贵链路。
+
+## 结合我的 MAS 项目：把语义路由放到 API 网关层
+
+我在本地做了一个可直接落地的项目： [MAS (Model Auto Switch)](https://github.com/xuerzong/mas)。
+
+它的思路不是让每个业务应用重复写路由逻辑，而是在 OpenAI 兼容网关层统一做“选模型决策”，再转发到上游。
+
+### 1. 请求链路（真实实现）
+
+以 `/chat/completions` 为例，MAS 的核心流程是：
+
+1. 解析 `messages`，提取文本；
+2. 基于配置中的 `condition` 列表做语义打分；
+3. 选择得分最高的模型；
+4. 把请求代理到上游 `baseURL`；
+5. 在响应头里回传路由结果（便于观测和压测）。
+
+你可以在响应头中直接看到：
+
+- `X-Model-Tier`
+- `X-Selected-Model`
+- `X-Model-Reason`
+
+这点很实用，因为你可以在不改客户端的前提下，统计“每类请求到底被路由到了哪个模型”。
+
+### 2. 选模型策略（真实实现）
+
+MAS 当前使用“condition 语义匹配”的方式：
+
+- 配置文件里定义多组 `{ condition, model }`；
+- 对用户消息和每条 `condition` 做向量相似度计算；
+- 取得分最高者作为目标模型。
+
+默认编码器是 `FastEmbedEncoder`（本地推理，不依赖远程 API），也支持切换为 `OpenAIEncoder`。
+
+此外它还做了两件对生产很关键的小事：
+
+- 使用 `tiktoken` 估算请求 Token，方便做成本监控；
+- 当编码器异常时，降级到关键词重叠打分，避免路由层直接不可用。
+
+### 3. 配置示例（来自项目）
+
+你可以像下面这样配置两个模型层级：
+
+```json
+{
+  "baseURL": "https://api.aiproxy.shop/v1",
+  "apiKey": "",
+  "models": [
+    {
+      "condition": "日常闲聊、问候寒暄、简单对话",
+      "model": "deepseek/deepseek-chat"
+    },
+    {
+      "condition": "编程开发、算法实现、代码示例、调试报错、技术问答",
+      "model": "moonshotai/kimi-k2.5"
+    }
+  ]
+}
+```
+
+这套配置的好处是：产品经理或运营也能看懂和维护，不需要改代码就能调路由策略。
+
+### 4. 如何运行（结合项目命令）
+
+```bash
+git clone git@github.com:xuerzong/mas.git
+cd mas
+./install.sh
+mas start
+mas status
+```
+
+调用方式依然是标准 OpenAI 兼容接口：
+
+```bash
+curl -X POST http://localhost:8000/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "auto",
+    "messages": [{"role": "user", "content": "帮我写一个快速排序"}],
+    "stream": false
+  }'
+```
+
+其中 `model` 字段在当前实现里是必填的，但它会被路由结果覆盖，因此可以传一个占位值（如 `auto`）。
+
+## 用它真正降低 Token 的方法
+
+路由本身不直接省 Token。省的是“路由之后的策略”。
+
+### 1. 不同路由绑定不同上下文预算
+
+示例策略：
+
+- `chitchat`：只给一个短系统提示，不做 RAG；
+- `kb_qa`：做 RAG，但 `top_k=3`，并限制 chunk 总字符；
+- `high_reasoning`：才使用长上下文、更多工具和更大模型。
+
+这样可以把“重资源链路”压缩到真正需要的请求。
+
+### 2. 把“是否检索”变成路由决策
+
+很多系统把检索当默认步骤，导致每次都塞进大量引用内容。
+更好的方式是：
+
+1. 先路由；
+2. 仅 `kb_qa` 才检索；
+3. 严格裁剪检索结果总长度。
+
+### 3. 设置兜底链路，避免误召回
+
+当 `router(query)` 返回 `None` 时：
+
+- 可以走最便宜模型做澄清提问；
+- 或直接让用户补充信息；
+- 不要默认切到最贵模型。
+
+在 MAS 这种网关式架构里，兜底还可以再加一层：
+
+- 当语义分数低于阈值时，强制回退到低成本模型；
+- 同时把 `X-Model-Reason` 打到日志里，后续再回放这批请求优化 condition。
+
+## 一个更实战的编排示意
+
+下面给出一个伪代码，展示“路由 + 成本分层”的核心结构：
+
+```ts
+type RouteName = 'chitchat' | 'kb_qa' | 'high_reasoning' | 'fallback'
+
+async function handleUserQuery(query: string) {
+  const route: RouteName = (await semanticRoute(query)) ?? 'fallback'
+
+  if (route === 'chitchat') {
+    return callLLM({
+      model: 'small-fast-model',
+      system: '你是简洁友好的助手。',
+      prompt: query,
+      maxTokens: 256,
+    })
+  }
+
+  if (route === 'kb_qa') {
+    const chunks = await retrieveTopK(query, 3)
+    const context = trimContext(chunks, 1800)
+
+    return callLLM({
+      model: 'small-fast-model',
+      system: `请优先依据以下知识回答：\n${context}`,
+      prompt: query,
+      maxTokens: 512,
+    })
+  }
+
+  if (route === 'high_reasoning') {
+    return callLLM({
+      model: 'large-reasoning-model',
+      system: '你是资深架构师，请给出结构化分析。',
+      prompt: query,
+      maxTokens: 1500,
+    })
+  }
+
+  return callLLM({
+    model: 'small-fast-model',
+    system: '请先澄清用户意图，再继续。',
+    prompt: query,
+    maxTokens: 128,
+  })
+}
+```
+
+这个结构最关键的是把“成本控制点”前移：
+在调用主模型之前，就决定好预算、模型和上下文规模。
+
+## 如何评估你到底省了多少
+
+建议至少记录这三个指标：
+
+- 平均输入 Token（prompt tokens/request）；
+- 平均输出 Token（completion tokens/request）；
+- 每 1000 次请求的总成本。
+
+你可以做一个简单 A/B：
+
+- A 组：所有请求都走统一大链路；
+- B 组：先 semantic route 再分层执行。
+
+通常你会看到：
+
+- `kb_qa` 路由下文档注入更精简；
+- `chitchat` 请求几乎不再触发检索；
+- 总体 P95 延迟也会一起下降。
+
+## 实践中的两个坑
+
+### 坑 1：Route 示例语句太少
+
+如果每个路由只放 2~3 条语句，边界会很脆。
+建议每条路由至少覆盖：
+
+- 同义表达；
+- 口语化表达；
+- 错别字和中英混输。
+
+### 坑 2：路由类别设计过细
+
+一开始就拆十几个路由通常会导致混淆。
+建议先从 3~5 个高价值路由开始，跑出真实数据后再细分。
+
+## 总结
+
+`semantic-router` 不是“再加一层复杂度”，而是把你原本隐性的 Token 浪费显性化、可控化。
+
+如果你已经有 RAG 或 Agent 系统，这个决策层几乎可以零侵入接入，而且往往是投入产出比最高的一步优化。
