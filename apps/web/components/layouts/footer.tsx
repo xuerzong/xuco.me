@@ -42,7 +42,7 @@ const FooterLinks = () => {
 const FooterBanner = () => {
   return (
     <span className="inline-flex items-center space-x-2 font-bold text-sm">
-      <span>©{new Date().getFullYear()} </span>
+      <span>©2020-{new Date().getFullYear()} </span>
       <span className="uppercase">{CONFIG.WEB_AUTHOR}</span>
     </span>
   )
