@@ -7,17 +7,19 @@
       "esnext"
     ],
     "allowJs": true,
-    "baseUrl": ".",
     "skipLibCheck": true,
     "strict": false,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
+    "paths": {
+      "*": ["./*"]
+    },
     "typeRoots": [
       "./src/types"
     ],
