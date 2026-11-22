@@ -1,7 +1,12 @@
----
-title: 流式输出的 Markdown 渲染优化
-description: 优化 AI 流式输出场景下的 Markdown 渲染性能。
----
+import { createMetadata } from 'libs/metadata'
+
+export const metadata = createMetadata({
+  title: '流式输出的 Markdown 渲染优化',
+  description: '优化 AI 流式输出场景下的 Markdown 渲染性能。',
+  image: '/og/post/optimizing-streaming-markdown',
+})
+
+<h1 className="text-2xl font-bold mb-6">流式输出的 Markdown 渲染优化</h1>
 
 在 AI 应用里，流式输出（streaming output）几乎已经成了默认选项。用户不用等模型把整段内容都生成完，界面就可以先把正在生成的部分展示出来，整体体验会自然很多。
 

@@ -1,5 +1,5 @@
 import CONFIG from 'constants/config'
-import { getAllContents, getFrontmatter } from 'contents/queries'
+import { getAllContents, getMetadata } from 'libs/content'
 
 export const dynamic = 'force-static'
 
@@ -21,7 +21,7 @@ export async function GET() {
   const pageLines = await Promise.all(
     pages.map(async (slug) => {
       const filePath = slug.join('/')
-      const data = await getFrontmatter('pages', filePath)
+      const data = await getMetadata('pages', filePath)
       const title = data.title || (slug[0] === 'index' ? 'Home' : slug.join('/'))
       const description = data.description ? ` - ${data.description}` : ''
       return `- ${title}: ${getPageUrl(slug)}${description}`
@@ -30,7 +30,7 @@ export async function GET() {
 
   const postLines = await Promise.all(
     posts.map(async (slug) => {
-      const data = await getFrontmatter('posts', slug.join('/'))
+      const data = await getMetadata('posts', slug.join('/'))
       const title = data.title || slug[slug.length - 1]
       const description = data.description ? ` - ${data.description}` : ''
       return `- ${title}: ${getPostUrl(slug)}${description}`

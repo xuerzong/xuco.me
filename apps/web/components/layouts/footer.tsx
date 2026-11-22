@@ -5,11 +5,11 @@ import CONFIG from 'constants/config'
 const footerLinks = [
   [
     {
-      name: 'Home',
+      name: '首页',
       path: '/',
     },
     {
-      name: 'Uses',
+      name: '工具',
       path: '/uses',
     },
   ],

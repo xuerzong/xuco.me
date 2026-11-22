@@ -10,20 +10,17 @@
   ],
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ],
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "build:packages": "turbo run build --filter='@xuerzong/*'",
     "start": "next start",
     "format": "prettier --write"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",
     "prettier": "^3.2.4",
-    "tsup": "^8.3.5",
     "turbo": "^2.1.3",
     "typescript": "^5.0.4"
   },

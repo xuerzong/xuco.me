@@ -1,13 +1,12 @@
-import Table from './table'
+import type { MDXComponents } from 'mdx/types'
 import Image from 'next/image'
-import { Link } from './link'
-import Pre from './pre'
-import { Tag } from './tag'
-import LogoASCII from './logo-ascii'
+import Table from 'components/mdx/table'
+import { Link } from 'components/mdx/link'
+import Pre from 'components/mdx/pre'
+import { Tag } from 'components/mdx/tag'
+import LogoASCII from 'components/mdx/logo-ascii'
 
-type MDXComponents = any
-
-const mdxComponents = {
+const components = {
   p: (props) => <p className="mb-4 text-current" {...props} />,
   a: Link,
   pre: Pre,
@@ -29,4 +28,6 @@ const mdxComponents = {
   LogoASCII,
 } as MDXComponents
 
-export default mdxComponents
+export function useMDXComponents(): MDXComponents {
+  return components
+}

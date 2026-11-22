@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 import CONFIG from 'constants/config'
-import { getAllContents } from 'contents/queries'
+import { getAllContents } from 'libs/content'
 
 export const dynamic = 'force-static'
 

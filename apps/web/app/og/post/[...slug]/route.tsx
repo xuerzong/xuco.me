@@ -1,4 +1,4 @@
-import { getAllContents, getFrontmatter } from 'contents/queries'
+import { getAllContents, getMetadata } from 'libs/content'
 import { createOgImage } from 'app/og-image'
 
 export const dynamic = 'force-static'
@@ -13,11 +13,11 @@ export async function GET(
   { params }: { params: Promise<{ slug: string[] }> }
 ) {
   const { slug } = await params
-  const frontmatter = await getFrontmatter('posts', slug.join('/'))
+  const metadata = await getMetadata('posts', slug.join('/'))
 
   return createOgImage({
-    title: frontmatter.title || slug[slug.length - 1],
-    description: frontmatter.description,
+    title: metadata.title || slug[slug.length - 1],
+    description: metadata.description,
     eyebrow: `/p/${slug.join('/')}`,
   })
 }

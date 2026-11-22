@@ -58,7 +58,7 @@ const LogoASCII: React.FC = () => {
   }, [])
 
   return (
-    <div className="text-foreground">
+    <div className="text-foreground py-8">
       <canvas ref={canvasRef} className="max-w-full text-current" aria-label="ASCII logo" />
     </div>
   )

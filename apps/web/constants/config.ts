@@ -1,7 +1,6 @@
 const SITE_URL = 'https://xuco.me'
 const SITE_TITLE = 'xuerzong'
-const SITE_DESCRIPTION =
-  'This is a personal website of xuerzong. I write about web development, programming, and life.'
+const SITE_DESCRIPTION = '这是我的个人网站，我会在这里分享我的想法和我的项目'
 const WEB_AUTHOR = 'xuerzong'
 const WEB_NAME = 'xuerzong'
 

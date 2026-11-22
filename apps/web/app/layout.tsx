@@ -46,7 +46,7 @@ interface LayoutProps {
 
 const Layout: React.FC<React.PropsWithChildren<LayoutProps>> = async ({ children }) => {
   return (
-    <html lang="en-US" style={themeCssVariables} suppressHydrationWarning>
+    <html lang="zh-CN" style={themeCssVariables} suppressHydrationWarning>
       <body
         className={`${fonts.GeistMonoFont.className} ${fonts.GeistMonoFont.variable} bg-background text-foreground`}
       >

@@ -1,7 +1,13 @@
----
-title: 如何使用 Semantic Router 减少 Token 使用量
-description: 用 semantic-router 在模型调用前做语义分流，减少无效上下文和误用大模型，从而显著降低 Token 成本。
----
+import { createMetadata } from 'libs/metadata'
+
+export const metadata = createMetadata({
+  title: '如何使用 Semantic Router 减少 Token 使用量',
+  description:
+    '用 semantic-router 在模型调用前做语义分流，减少无效上下文和误用大模型，从而显著降低 Token 成本。',
+  image: '/og/post/how-to-reduce-your-token-usage-using-semantic-router',
+})
+
+<h1 className="text-2xl font-bold mb-6">如何使用 Semantic Router 减少 Token 使用量</h1>
 
 在大多数 AI 应用里，Token 超支通常不是因为“模型太贵”，而是因为我们把太多不该发给模型的信息都发过去了。
 
